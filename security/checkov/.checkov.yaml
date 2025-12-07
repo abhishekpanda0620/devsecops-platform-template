@@ -1,0 +1,58 @@
+# Checkov Configuration
+# Infrastructure as Code security scanning
+
+# Skipped checks (with justification)
+skip-check:
+  # Skip checks that are too strict for development
+  - CKV_K8S_21  # Default namespace - allowed in dev
+  - CKV_K8S_22  # Read-only filesystem - may break apps
+  - CKV_K8S_40  # OpenShift specific
+
+# Check types to run
+check:
+  - CKV_AWS
+  - CKV_K8S
+  - CKV_DOCKER
+  - CKV2_AWS
+
+# Framework-specific configurations
+framework:
+  - terraform
+  - kubernetes
+  - helm
+  - dockerfile
+
+# Directories to scan
+directory:
+  - infra/terraform
+  - infra/k8s
+  - infra/helm
+  - app/Dockerfile
+
+# External checks (custom policies)
+external-checks-dir:
+  - security/checkov/custom-policies
+
+# Output configuration
+output-format: cli
+
+# Compact output
+compact: true
+
+# Soft fail (don't exit with error)
+soft-fail: false
+
+# Download external modules
+download-external-modules: true
+
+# Minimum severity to fail
+# Options: LOW, MEDIUM, HIGH, CRITICAL
+evaluate-variables: true
+
+# Hard fail thresholds
+hard-fail-on:
+  - CRITICAL
+  - HIGH
+
+# Baseline file for suppressing known issues
+# baseline: .checkov.baseline

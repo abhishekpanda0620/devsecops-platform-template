@@ -1,0 +1,40 @@
+# User Service Application - Production Environment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: user-service-prod
+  namespace: argocd
+  labels:
+    app: user-service
+    environment: prod
+  annotations:
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: production
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: production-alerts
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/abhishekpanda0620/devsecops-platform-template.git
+    targetRevision: HEAD
+    path: infra/k8s/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+  syncPolicy:
+    # Manual sync for production
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  # Rollback configuration
+  revisionHistoryLimit: 10
+  # Health checks
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas

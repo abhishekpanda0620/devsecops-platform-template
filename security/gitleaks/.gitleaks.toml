@@ -1,0 +1,75 @@
+# Gitleaks Configuration
+# Custom rules for secret detection
+
+title = "DevSecOps Platform Gitleaks Config"
+
+[extend]
+# Use the default gitleaks config as a base
+useDefault = true
+
+# Allowlist paths that should be ignored
+[allowlist]
+description = "Allowlisted paths and patterns"
+paths = [
+    '''node_modules/''',
+    '''vendor/''',
+    '''\.git/''',
+    '''\.github/''',
+    '''docs/''',
+    '''\.(md|txt|rst)$''',
+    '''package-lock\.json$''',
+    '''go\.sum$''',
+]
+
+# Custom regex patterns to ignore (false positives)
+regexes = [
+    '''example\.com''',
+    '''localhost''',
+    '''127\.0\.0\.1''',
+    '''EXAMPLE_''',
+    '''YOUR_.*_HERE''',
+]
+
+# Custom rules for additional secret patterns
+[[rules]]
+id = "custom-api-key"
+description = "Custom API Key Pattern"
+regex = '''(?i)(api[_-]?key|apikey)\s*[:=]\s*['"]?([a-zA-Z0-9_-]{20,})['"]?'''
+keywords = ["api_key", "apikey", "api-key"]
+entropy = 3.5
+
+[[rules]]
+id = "custom-jwt"
+description = "JWT Token"
+regex = '''eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+'''
+keywords = ["eyJ"]
+
+[[rules]]
+id = "custom-private-key"
+description = "Private Key File Content"
+regex = '''-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'''
+keywords = ["BEGIN", "PRIVATE", "KEY"]
+
+[[rules]]
+id = "slack-webhook"
+description = "Slack Webhook URL"
+regex = '''https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[a-zA-Z0-9]+'''
+keywords = ["hooks.slack.com"]
+
+[[rules]]
+id = "aws-credentials"
+description = "AWS Access Key ID"
+regex = '''(?i)aws(.{0,20})?(?-i)(''A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+keywords = ["AKIA", "AGPA", "AIDA", "AROA", "AIPA", "ANPA", "ANVA", "ASIA"]
+
+[[rules]]
+id = "github-token"
+description = "GitHub Personal Access Token"
+regex = '''ghp_[a-zA-Z0-9]{36}'''
+keywords = ["ghp_"]
+
+[[rules]]
+id = "github-oauth"
+description = "GitHub OAuth Token"
+regex = '''gho_[a-zA-Z0-9]{36}'''
+keywords = ["gho_"]

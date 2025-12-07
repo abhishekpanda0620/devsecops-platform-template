@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+*.tgz
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+crash.log
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# Secrets (never commit these!)
+*.pem
+*.key
+*.crt
+secrets/
+.secrets/
+
+# SBOM outputs (generated during CI)
+sbom/*.json
+sbom/*.xml
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Debug
+debug/
+
+# Docker
+docker-compose.override.yml
+
+# terraform
+terraform.tfstate
+terraform.tfstate.* 
+

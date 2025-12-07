@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # User Service
+  user-service:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      target: production
+    container_name: user-service
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - ALLOWED_ORIGINS=http://localhost:3000
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - devsecops-network
+    labels:
+      - "app=user-service"
+      - "environment=development"
+
+  # Development mode with hot reload
+  user-service-dev:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      target: builder
+    container_name: user-service-dev
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    volumes:
+      - ./app/src:/app/src:ro
+    command: npm run dev
+    networks:
+      - devsecops-network
+    profiles:
+      - dev
+
+  # Security scanning service (Trivy)
+  trivy:
+    image: aquasec/trivy:latest
+    container_name: trivy-scanner
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./sbom:/sbom
+    command: ["--version"]
+    profiles:
+      - security
+
+  # SBOM generation (Syft)
+  syft:
+    image: anchore/syft:latest
+    container_name: syft-sbom
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./sbom:/sbom
+    command: ["--version"]
+    profiles:
+      - security
+
+networks:
+  devsecops-network:
+    driver: bridge
+    name: devsecops-network
+
+volumes:
+  sbom:

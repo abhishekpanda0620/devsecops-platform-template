@@ -1,0 +1,28 @@
+# Code Owners
+# These owners will be requested for review on PRs
+
+# Default owners for everything
+* @abhishekpanda0620
+
+# CI/CD and DevOps
+/.github/ @abhishekpanda0620
+/Makefile @abhishekpanda0620
+
+# Security configurations
+/security/ @abhishekpanda0620
+
+# Infrastructure
+/infra/terraform/ @abhishekpanda0620
+/infra/k8s/ @abhishekpanda0620
+/infra/argocd/ @abhishekpanda0620
+/infra/helm/ @abhishekpanda0620
+
+# Runtime security
+/runtime/ @abhishekpanda0620
+
+# Application code
+/app/ @abhishekpanda0620
+
+# Documentation
+/docs/ @abhishekpanda0620
+*.md @abhishekpanda0620

@@ -1,0 +1,81 @@
+# Trivy Configuration
+# Vulnerability scanning configuration for containers and filesystems
+
+# Scan settings
+scan:
+  # Skip directories
+  skip-dirs:
+    - node_modules
+    - vendor
+    - .git
+
+  # Skip files
+  skip-files:
+    - "*.md"
+    - "*.txt"
+    - "LICENSE"
+
+# Vulnerability settings
+vulnerability:
+  # Ignore unfixed vulnerabilities
+  ignore-unfixed: false
+  
+  # Vulnerability types to scan
+  type:
+    - os
+    - library
+
+# Severity thresholds
+severity:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+
+# Secret scanning
+secret:
+  config: trivy-secret.yaml
+
+# Misconfiguration settings
+misconfiguration:
+  # Enable misconfiguration scanning
+  enabled: true
+  
+  # Scanners
+  scanners:
+    - dockerfile
+    - kubernetes
+    - terraform
+    - helm
+
+# License scanning
+license:
+  # Enable license scanning
+  enabled: true
+  
+  # Forbidden licenses
+  forbidden:
+    - GPL-3.0
+    - AGPL-3.0
+  
+  # Allowed licenses
+  allowed:
+    - MIT
+    - Apache-2.0
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - ISC
+    - MPL-2.0
+
+# Output format
+format: table
+
+# Exit code on findings
+exit-code: 1
+
+# Cache settings
+cache:
+  # Cache directory
+  dir: /tmp/trivy-cache
+  
+  # Cache TTL (hours)
+  ttl: 24

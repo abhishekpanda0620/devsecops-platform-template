@@ -1,0 +1,119 @@
+rules:
+  # SQL Injection Detection
+  - id: sql-injection-express
+    patterns:
+      - pattern: |
+          $QUERY = "..." + $USER_INPUT + "..."
+          ...
+          $DB.query($QUERY)
+    message: "Potential SQL injection vulnerability"
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-89"
+      owasp: "A03:2021 - Injection"
+
+  # XSS Prevention
+  - id: xss-innerHTML
+    pattern: $ELEMENT.innerHTML = $USER_INPUT
+    message: "Potential XSS vulnerability - use textContent or sanitize input"
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-79"
+
+  # Hardcoded Secrets
+  - id: hardcoded-password
+    patterns:
+      - pattern: |
+          password = "..."
+      - pattern: |
+          const password = "..."
+      - pattern: |
+          let password = "..."
+    message: "Hardcoded password detected - use environment variables"
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-798"
+
+  # Insecure Crypto
+  - id: weak-crypto-md5
+    pattern: crypto.createHash('md5')
+    message: "MD5 is cryptographically weak - use SHA-256 or better"
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-328"
+
+  # Command Injection
+  - id: command-injection
+    patterns:
+      - pattern: exec($USER_INPUT)
+      - pattern: execSync($USER_INPUT)
+      - pattern: spawn($USER_INPUT, ...)
+    message: "Potential command injection - validate and sanitize input"
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-78"
+
+  # Path Traversal
+  - id: path-traversal
+    patterns:
+      - pattern: fs.readFile($USER_INPUT, ...)
+      - pattern: fs.readFileSync($USER_INPUT, ...)
+    message: "Potential path traversal - validate file paths"
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-22"
+
+  # Insecure Randomness
+  - id: insecure-random
+    patterns:
+      - pattern: Math.random()
+    message: "Math.random() is not cryptographically secure - use crypto.randomBytes()"
+    languages: [javascript, typescript]
+    severity: INFO
+    metadata:
+      category: security
+      cwe: "CWE-330"
+
+  # Eval Usage
+  - id: dangerous-eval
+    patterns:
+      - pattern: eval($X)
+      - pattern: new Function($X)
+    message: "Avoid eval() and new Function() - potential code injection"
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-95"
+
+  # Missing HTTPS
+  - id: insecure-http
+    pattern-regex: "http://(?!localhost|127\\.0\\.0\\.1)"
+    message: "Use HTTPS instead of HTTP for external connections"
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-319"
+
+  # JWT Best Practices
+  - id: jwt-no-verify
+    pattern: jwt.decode($TOKEN)
+    message: "Use jwt.verify() instead of jwt.decode() to validate tokens"
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-347"
