@@ -41,7 +41,7 @@ jobs:
       environment: ${{ steps.params.outputs.environment }}
       version: ${{ steps.params.outputs.version }}
       image: ${{ steps.params.outputs.image }}
-    
+
     steps:
       - name: Determine parameters
         id: params
@@ -64,18 +64,18 @@ jobs:
     name: 🔐 Verify Image
     runs-on: ubuntu-latest
     needs: [prepare]
-    
+
     steps:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
-      
+
       - name: Log in to Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Verify image signature
         run: |
           cosign verify \
@@ -91,30 +91,30 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, verify]
     environment: ${{ needs.prepare.outputs.environment }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v2
-      
+
       - name: Update image tag
         run: |
           cd infra/k8s/overlays/${{ needs.prepare.outputs.environment }}
           kustomize edit set image user-service=${{ needs.prepare.outputs.image }}:${{ needs.prepare.outputs.version }}
-      
+
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add infra/k8s/overlays/
           git commit -m "chore: deploy ${{ needs.prepare.outputs.version }} to ${{ needs.prepare.outputs.environment }}
-          
+
           Automated deployment triggered by CD pipeline.
-          
+
           Image: ${{ needs.prepare.outputs.image }}:${{ needs.prepare.outputs.version }}
           Environment: ${{ needs.prepare.outputs.environment }}
           Triggered by: ${{ github.actor }}
@@ -129,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, update-manifests]
     if: needs.prepare.outputs.environment != 'prod'
-    
+
     steps:
       - name: Wait for ArgoCD sync
         run: |
@@ -145,11 +145,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, wait-sync]
     if: needs.prepare.outputs.environment != 'prod'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Run smoke tests
         run: |
           echo "Running smoke tests against ${{ needs.prepare.outputs.environment }}..."
@@ -166,33 +166,33 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, smoke-tests]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    environment: 
+    environment:
       name: prod
       url: https://api.example.com
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v2
-      
+
       - name: Update production image tag
         run: |
           cd infra/k8s/overlays/prod
           kustomize edit set image user-service=${{ needs.prepare.outputs.image }}:${{ needs.prepare.outputs.version }}
-      
+
       - name: Commit and push production changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add infra/k8s/overlays/prod/
           git commit -m "chore: deploy ${{ needs.prepare.outputs.version }} to production
-          
+
           Production deployment after staging verification.
-          
+
           Image: ${{ needs.prepare.outputs.image }}:${{ needs.prepare.outputs.version }}
           Approved by: ${{ github.actor }}
           " || echo "No changes to commit"
@@ -206,7 +206,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, smoke-tests]
     if: failure() && needs.smoke-tests.result == 'failure'
-    
+
     steps:
       - name: Trigger rollback
         run: |
@@ -222,7 +222,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, update-manifests, smoke-tests]
     if: always()
-    
+
     steps:
       - name: Deployment Summary
         run: |

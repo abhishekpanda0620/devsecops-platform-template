@@ -69,5 +69,4 @@ docker-compose.override.yml
 
 # terraform
 terraform.tfstate
-terraform.tfstate.* 
-
+terraform.tfstate.*

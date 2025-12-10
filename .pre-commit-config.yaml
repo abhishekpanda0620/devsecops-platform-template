@@ -45,7 +45,7 @@ repos:
         entry: gitleaks protect --verbose --redact --staged
 
   - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.4.0 
+    rev: v1.4.0
     hooks:
       - id: detect-secrets
         name: Detect secrets (Yelp)
@@ -104,18 +104,16 @@ repos:
         stages: [pre-push]  # Only on push (slow)
 
   # ===========================================
-  # Kubernetes/YAML
+  # Kubernetes/YAML - Using local hook
   # ===========================================
-  - repo: https://github.com/yannh/kubeconform
-    rev: v0.6.4
+  - repo: local
     hooks:
       - id: kubeconform
         name: Validate Kubernetes manifests
-        args:
-          - '-strict'
-          - '-ignore-missing-schemas'
-          - '-skip=CustomResourceDefinition'
+        entry: bash -c 'if command -v kubeconform &> /dev/null; then kubeconform -strict -ignore-missing-schemas -skip CustomResourceDefinition "$@"; else echo "kubeconform not installed, skipping"; fi'
+        language: system
         files: 'infra/k8s/.*\.yaml$'
+        pass_filenames: true
 
   # ===========================================
   # Docker

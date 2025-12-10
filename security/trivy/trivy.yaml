@@ -19,7 +19,7 @@ scan:
 vulnerability:
   # Ignore unfixed vulnerabilities
   ignore-unfixed: false
-  
+
   # Vulnerability types to scan
   type:
     - os
@@ -39,7 +39,7 @@ secret:
 misconfiguration:
   # Enable misconfiguration scanning
   enabled: true
-  
+
   # Scanners
   scanners:
     - dockerfile
@@ -51,12 +51,12 @@ misconfiguration:
 license:
   # Enable license scanning
   enabled: true
-  
+
   # Forbidden licenses
   forbidden:
     - GPL-3.0
     - AGPL-3.0
-  
+
   # Allowed licenses
   allowed:
     - MIT
@@ -76,6 +76,6 @@ exit-code: 1
 cache:
   # Cache directory
   dir: /tmp/trivy-cache
-  
+
   # Cache TTL (hours)
   ttl: 24

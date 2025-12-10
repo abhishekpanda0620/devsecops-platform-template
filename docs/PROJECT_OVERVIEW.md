@@ -8,7 +8,8 @@
 
 This is a **production-ready DevSecOps framework** that demonstrates how to build secure, automated, and observable software delivery pipelines. It implements the "shift-left" security philosophy by integrating security at every stage of the SDLC.
 
-### Key Goals:
+### Key Goals
+
 1. **Automate security** - Security scans run automatically, not manually
 2. **Shift left** - Find issues early (in code) rather than late (in production)
 3. **GitOps** - Infrastructure and deployments are code-driven
@@ -43,7 +44,8 @@ devsecops-platform-template/
 
 **What**: Automated checks that run on your local machine BEFORE code is committed.
 
-**Why**: 
+**Why**:
+
 - Prevents secrets from ever entering git history
 - Catches issues before they reach CI (faster feedback)
 - Enforces code standards consistently across team
@@ -69,6 +71,7 @@ devsecops-platform-template/
 **What**: Automated security scans that run on every push/PR in GitHub Actions.
 
 **Why**:
+
 - Catches issues that slip past pre-commit
 - Provides consistent, auditable security checks
 - Blocks PRs with critical vulnerabilities
@@ -100,6 +103,7 @@ devsecops-platform-template/
 **What**: A comprehensive security-focused workflow that runs daily and on-demand.
 
 **Why**:
+
 - New vulnerabilities are discovered daily
 - Scheduled scans catch CVEs reported after initial deployment
 - Provides security summary for compliance
@@ -132,6 +136,7 @@ devsecops-platform-template/
 | **Verification** | Cosign | Verifies signature before deployment |
 
 **Why This Matters**:
+
 - SolarWinds attack: Malicious code inserted into build
 - Log4Shell: Need to know if you're affected
 - SBOM is now required for US government software
@@ -148,6 +153,7 @@ devsecops-platform-template/
 | **Runtime Detection** | Falco | Detects suspicious activity in running containers |
 
 **OPA Gatekeeper Policies** (`runtime/opa-gatekeeper/`):
+
 - Block containers running as root
 - Require resource limits
 - Enforce image registry whitelists
@@ -191,6 +197,7 @@ devsecops-platform-template/
 **What**: Continuous Deployment using GitOps principles.
 
 **Flow**:
+
 ```
 Tag Push (v1.0.0)
        │
@@ -225,6 +232,7 @@ Tag Push (v1.0.0)
 ```
 
 **Why GitOps?**
+
 - Git is the source of truth
 - Every change is auditable
 - Easy rollbacks (git revert)
@@ -237,6 +245,7 @@ Tag Push (v1.0.0)
 **What**: Infrastructure changes managed through PRs.
 
 **Why**:
+
 - Infrastructure changes are reviewed like code
 - `terraform plan` shows what will change
 - Apply only after PR approval
@@ -273,6 +282,7 @@ base/           ◄── Common configuration
 ```
 
 **Why Kustomize?**
+
 - No templating complexity (unlike Helm)
 - Base + patches = clear inheritance
 - Native kubectl support
@@ -292,6 +302,7 @@ base/           ◄── Common configuration
 | `apps/falco.yaml` | Runtime security |
 
 **App-of-Apps Pattern**:
+
 ```
 root-app
     │
@@ -311,6 +322,7 @@ root-app
 ### Why Observability?
 
 You can't secure or fix what you can't see. Observability answers:
+
 - **Metrics**: Is the system healthy? (Prometheus)
 - **Logs**: What happened? (Loki)
 - **Traces**: Why is it slow? (Tempo)
@@ -380,6 +392,7 @@ The Dockerfile (`app/Dockerfile`) demonstrates security best practices:
 | `environments/dev/` | Dev environment configuration |
 
 **Why Terraform?**
+
 - Reproducible infrastructure
 - Version controlled
 - Plan before apply
@@ -484,21 +497,27 @@ Developer writes code
 ## 🎓 KEY CONCEPTS TO EXPLAIN
 
 ### 1. Shift Left
+
 Move security earlier in the development process. Finding a bug in production costs 100x more than finding it in development.
 
 ### 2. Defense in Depth
+
 Multiple layers of security. If one fails, others still protect you.
 
 ### 3. GitOps
+
 Git is the single source of truth. All changes through Git, automated reconciliation.
 
 ### 4. Infrastructure as Code
+
 Infrastructure defined in code, version controlled, reviewed, reproducible.
 
 ### 5. Zero Trust
+
 Never trust, always verify. Even internal traffic is authenticated and authorized.
 
 ### 6. Observability
+
 The ability to understand internal system state from external outputs (metrics, logs, traces).
 
 ---

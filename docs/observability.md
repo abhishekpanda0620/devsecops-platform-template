@@ -99,6 +99,7 @@ open http://localhost:3000
 ```
 
 **Default Credentials:**
+
 - Username: `admin`
 - Password: `prom-operator` (or check: `kubectl get secret -n observability prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d`)
 
@@ -129,6 +130,7 @@ The stack includes the following dashboards:
 ### Custom Application Dashboard
 
 The User Service dashboard (`infra/k8s/base/grafana-dashboard.yaml`) provides:
+
 - Request rate by status code
 - Request latency (p50, p95)
 - Error rate
@@ -141,6 +143,7 @@ The User Service dashboard (`infra/k8s/base/grafana-dashboard.yaml`) provides:
 ### Default Alerts
 
 The kube-prometheus-stack includes alerts for:
+
 - Node availability
 - Pod health
 - Resource utilization
@@ -171,7 +174,7 @@ alertmanager:
           - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
             channel: '#alerts'
             send_resolved: true
-      
+
       - name: 'pagerduty-critical'
         pagerduty_configs:
           - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
@@ -265,6 +268,7 @@ kubectl port-forward -n observability svc/prometheus-kube-prometheus-prometheus 
 ### Common Issues
 
 **Prometheus not scraping targets:**
+
 ```bash
 # Check ServiceMonitor exists
 kubectl get servicemonitors -A
@@ -274,6 +278,7 @@ kubectl get secret -n observability prometheus-kube-prometheus-prometheus -o jso
 ```
 
 **Grafana datasource not working:**
+
 ```bash
 # Verify Prometheus service
 kubectl get svc -n observability | grep prometheus

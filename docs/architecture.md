@@ -131,27 +131,27 @@ Namespaces:
   dev:
     - user-service (1 replica, SPOT instances)
     - HorizontalPodAutoscaler (1-3 replicas)
-    
+
   staging:
     - user-service (2 replicas)
     - HorizontalPodAutoscaler (2-5 replicas)
-    
+
   prod:
     - user-service (3 replicas, ON_DEMAND instances)
     - HorizontalPodAutoscaler (3-20 replicas)
     - Ingress with TLS
     - Rate limiting
-    
+
   monitoring:
     - Prometheus
     - Grafana
     - Loki
     - Alertmanager
-    
+
   falco-system:
     - Falco DaemonSet
     - Falcosidekick
-    
+
   gatekeeper-system:
     - OPA Gatekeeper
     - Constraint Templates

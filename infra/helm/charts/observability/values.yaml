@@ -358,9 +358,9 @@ customRules:
 
     - alert: HighMemoryUsage
       expr: |
-        container_memory_usage_bytes{container!=""} 
-        / 
-        container_spec_memory_limit_bytes{container!=""} 
+        container_memory_usage_bytes{container!=""}
+        /
+        container_spec_memory_limit_bytes{container!=""}
         > 0.9
       for: 5m
       labels:
@@ -371,9 +371,9 @@ customRules:
 
     - alert: PersistentVolumeAlmostFull
       expr: |
-        kubelet_volume_stats_available_bytes 
-        / 
-        kubelet_volume_stats_capacity_bytes 
+        kubelet_volume_stats_available_bytes
+        /
+        kubelet_volume_stats_capacity_bytes
         < 0.1
       for: 5m
       labels:

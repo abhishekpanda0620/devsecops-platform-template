@@ -18,18 +18,18 @@ spec:
       values: |
         driver:
           kind: ebpf
-        
+
         falco:
           jsonOutput: true
           jsonIncludeOutputProperty: true
           httpOutput:
             enabled: true
             url: "http://falcosidekick:2801"
-          
+
           rules:
             - macro: container
               condition: container.id != host
-            
+
             # Custom rules
             - rule: Terminal shell in container
               desc: A shell was spawned in a container
@@ -43,7 +43,7 @@ spec:
                 container_name=%container.name shell=%proc.name
                 parent=%proc.pname cmdline=%proc.cmdline)
               priority: WARNING
-        
+
         falcosidekick:
           enabled: true
           webui:
