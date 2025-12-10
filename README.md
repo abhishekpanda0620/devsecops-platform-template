@@ -20,18 +20,7 @@ A **production-ready, opinionated DevSecOps framework** that provides a complete
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              DevSecOps Pipeline                              │
-├────────────────┬────────────────┬────────────────┬────────────────┬─────────┤
-│   CODE         │   BUILD        │   SECURITY     │   DEPLOY       │ RUNTIME │
-│                │                │                │                │         │
-│ • Git Push     │ • Docker Build │ • Gitleaks     │ • ArgoCD Sync  │ • Falco │
-│ • PR Review    │ • Unit Tests   │ • Semgrep      │ • K8s Apply    │ • OPA   │
-│ • Lint         │ • SBOM Gen     │ • Trivy        │ • Smoke Tests  │ • Prom  │
-│                │ • Image Sign   │ • Checkov      │ • Rollback     │ • Loki  │
-└────────────────┴────────────────┴────────────────┴────────────────┴─────────┘
-```
+![DevSecOps Platform Architecture](docs/devsecops-platform-archDiagram.drawio.png)
 
 ---
 
@@ -168,6 +157,7 @@ make observability-portforward
 ## 🔄 GitOps Workflow (Continuous Delivery)
 
 This project implements **Continuous Delivery** (not Continuous Deployment):
+
 - ✅ **Staging**: Automatic deployment on tag push
 - ⏸️ **Production**: Requires manual approval (industry best practice)
 

@@ -6,38 +6,38 @@ This document describes the architecture of the DevSecOps Platform Template.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                                  DEVELOPER WORKFLOW                                   │
+│                                  DEVELOPER WORKFLOW                                 │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                       │
+│                                                                                     │
 │   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐      │
 │   │  Code    │───▶│   PR     │───▶│   CI     │───▶│  Build   │───▶│  Deploy  │      │
 │   │  Commit  │    │  Review  │    │ Pipeline │    │  Image   │    │ (GitOps) │      │
 │   └──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘      │
-│                                         │                               │            │
-│                           ┌─────────────┴─────────────┐                 │            │
-│                           ▼                           ▼                 ▼            │
+│                                                                                     │
+│                           ┌─────────────┴─────────────┐                             │
+│                           ▼                           ▼                             │
 │                    ┌────────────┐            ┌────────────┐      ┌──────────┐       │
 │                    │  Security  │            │   SBOM &   │      │  ArgoCD  │       │
 │                    │   Scans    │            │   Sign     │      │   Sync   │       │
 │                    └────────────┘            └────────────┘      └──────────┘       │
-│                                                                                       │
+│                                                                                     │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                                  KUBERNETES CLUSTER                                   │
-├─────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                       │
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                                  KUBERNETES CLUSTER                                  │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
 │   ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐                      │
 │   │   Application   │  │    Monitoring   │  │ Runtime Security │                     │
 │   │   Namespace     │  │    Namespace    │  │    Namespace     │                     │
-│   ├─────────────────┤  ├─────────────────┤  ├─────────────────┤                     │
+│   ├─────────────────┤  ├─────────────────┤  ├─────────────────┤                      │
 │   │ • user-service  │  │ • Prometheus    │  │ • Falco          │                     │
 │   │ • HPA           │  │ • Grafana       │  │ • OPA Gatekeeper │                     │
 │   │ • NetworkPolicy │  │ • Loki          │  │ • Network Policy │                     │
 │   │ • PDB           │  │ • Alertmanager  │  │                  │                     │
-│   └─────────────────┘  └─────────────────┘  └─────────────────┘                     │
-│                                                                                       │
-└─────────────────────────────────────────────────────────────────────────────────────┘
+│   └─────────────────┘  └─────────────────┘  └─────────────────┘                      │
+│                                                                                      │
+└──────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Component Details
@@ -63,14 +63,14 @@ The CI/CD pipeline is implemented using GitHub Actions and consists of the follo
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                       GitOps Flow                                 │
+│                       GitOps Flow                                │
 ├──────────────────────────────────────────────────────────────────┤
-│                                                                   │
+│                                                                  │
 │   GitHub Repository          ArgoCD                 Kubernetes   │
-│   ┌─────────────┐           ┌─────────┐           ┌───────────┐ │
-│   │  Manifests  │──poll────▶│  Sync   │──deploy──▶│   Pods    │ │
-│   │  (k8s/)     │           │  Engine │           │           │ │
-│   └─────────────┘           └─────────┘           └───────────┘ │
+│   ┌─────────────┐           ┌─────────┐           ┌───────────┐  │
+│   │  Manifests  │──poll────▶│  Sync   │──deploy──▶│   Pods    │  │
+│   │  (k8s/)     │           │  Engine │           │           │  │
+│   └─────────────┘           └─────────┘           └───────────┘  │
 │         │                         │                      │       │
 │         │                         ▼                      │       │
 │         │                   ┌─────────┐                  │       │
@@ -79,11 +79,11 @@ The CI/CD pipeline is implemented using GitHub Actions and consists of the follo
 │         │                   └─────────┘                          │
 │         │                         │                              │
 │         │                         ▼                              │
-│         │    ◀──rollback─── ┌─────────┐                         │
-│         │                   │ Rollback│                         │
-│         │                   │ on Fail │                         │
-│         │                   └─────────┘                         │
-│                                                                   │
+│         │    ◀──rollback─── ┌─────────┐                          │
+│         │                   │ Rollback│                          │
+│         │                   │ on Fail │                          │
+│         │                   └─────────┘                          │
+│                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -92,9 +92,9 @@ The CI/CD pipeline is implemented using GitHub Actions and consists of the follo
 The platform implements defense-in-depth with multiple security layers:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────────┐
 │                      Security Layers                             │
-├─────────────────────────────────────────────────────────────────┤
+├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Layer 1: Code Security                                          │
 │  ├── Secret scanning (Gitleaks)                                  │
@@ -102,17 +102,17 @@ The platform implements defense-in-depth with multiple security layers:
 │  └── Dependency scanning (Trivy)                                 │
 │                                                                  │
 │  Layer 2: Build Security                                         │
-│  ├── Container scanning (Trivy, Grype)                          │
+│  ├── Container scanning (Trivy, Grype)                           │
 │  ├── SBOM generation (Syft)                                      │
 │  └── Image signing (Cosign)                                      │
 │                                                                  │
 │  Layer 3: Infrastructure Security                                │
-│  ├── IaC scanning (Checkov, tfsec)                              │
+│  ├── IaC scanning (Checkov, tfsec)                               │
 │  ├── EOL technology detection (eol-check)                        │
-│  └── Policy as Code (OPA Gatekeeper)                            │
+│  └── Policy as Code (OPA Gatekeeper)                             │
 │                                                                  │
 │  Layer 4: Runtime Security                                       │
-│  ├── Admission control (OPA Gatekeeper)                         │
+│  ├── Admission control (OPA Gatekeeper)                          │
 │  ├── Runtime detection (Falco)                                   │
 │  └── Network policies                                            │
 │                                                                  │
@@ -121,7 +121,7 @@ The platform implements defense-in-depth with multiple security layers:
 │  ├── Logs (Loki)                                                 │
 │  └── Dashboards (Grafana)                                        │
 │                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### 4. Kubernetes Architecture
