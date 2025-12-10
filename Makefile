@@ -188,3 +188,72 @@ version: ## Show version information
 	@echo "  App: $(shell cat app/package.json | jq -r .version 2>/dev/null || echo 'unknown')"
 	@echo "  Image Tag: $(IMAGE_TAG)"
 	@echo "  Environment: $(ENVIRONMENT)"
+
+##@ Pre-commit Hooks
+
+pre-commit-install: ## Install pre-commit hooks
+	@echo "$(BLUE)Installing pre-commit hooks...$(RESET)"
+	@pip install pre-commit || pip3 install pre-commit
+	@pre-commit install
+	@pre-commit install --hook-type commit-msg
+	@echo "$(GREEN)✓ Pre-commit hooks installed$(RESET)"
+
+pre-commit-run: ## Run pre-commit on all files
+	@echo "$(BLUE)Running pre-commit checks...$(RESET)"
+	@pre-commit run --all-files
+
+pre-commit-update: ## Update pre-commit hooks to latest versions
+	@echo "$(BLUE)Updating pre-commit hooks...$(RESET)"
+	@pre-commit autoupdate
+	@echo "$(GREEN)✓ Pre-commit hooks updated$(RESET)"
+
+##@ Observability
+
+observability-deps: ## Add Helm repos for observability stack
+	@echo "$(BLUE)Adding Helm repositories...$(RESET)"
+	@helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
+	@helm repo add grafana https://grafana.github.io/helm-charts || true
+	@helm repo update
+	@echo "$(GREEN)✓ Helm repositories added$(RESET)"
+
+observability-install: observability-deps ## Install observability stack via Helm (non-GitOps)
+	@echo "$(BLUE)Installing observability stack...$(RESET)"
+	@kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
+	@helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+		--namespace observability \
+		--values infra/helm/charts/observability/values.yaml \
+		--wait
+	@helm upgrade --install loki grafana/loki-stack \
+		--namespace observability \
+		--set loki.persistence.enabled=true \
+		--set promtail.enabled=true \
+		--set grafana.enabled=false \
+		--wait
+	@echo "$(GREEN)✓ Observability stack installed$(RESET)"
+
+observability-argocd: ## Deploy observability stack via ArgoCD (GitOps)
+	@echo "$(BLUE)Deploying observability stack via ArgoCD...$(RESET)"
+	@kubectl apply -f infra/argocd/apps/observability.yaml
+	@echo "$(GREEN)✓ Observability ArgoCD application created$(RESET)"
+	@echo "$(YELLOW)Run 'argocd app sync observability-stack' to sync$(RESET)"
+
+observability-status: ## Show observability stack status
+	@echo "$(BLUE)Observability Stack Status:$(RESET)"
+	@echo ""
+	@echo "$(YELLOW)Pods:$(RESET)"
+	@kubectl get pods -n observability 2>/dev/null || echo "Namespace not found"
+	@echo ""
+	@echo "$(YELLOW)Services:$(RESET)"
+	@kubectl get svc -n observability 2>/dev/null || echo "Namespace not found"
+
+observability-portforward: ## Port-forward Grafana (localhost:3000)
+	@echo "$(BLUE)Port-forwarding Grafana to localhost:3000...$(RESET)"
+	@echo "$(YELLOW)Default credentials: admin / prom-operator$(RESET)"
+	@kubectl port-forward -n observability svc/prometheus-grafana 3000:80
+
+observability-uninstall: ## Uninstall observability stack
+	@echo "$(RED)Uninstalling observability stack...$(RESET)"
+	@helm uninstall prometheus -n observability 2>/dev/null || true
+	@helm uninstall loki -n observability 2>/dev/null || true
+	@kubectl delete namespace observability --ignore-not-found
+	@echo "$(GREEN)✓ Observability stack uninstalled$(RESET)"

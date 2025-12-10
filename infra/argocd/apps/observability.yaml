@@ -1,0 +1,36 @@
+# Observability Stack - ArgoCD App of Apps
+# Deploys all observability components: Prometheus, Grafana, Loki, Tempo
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: observability-stack
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-platform
+    app.kubernetes.io/component: observability
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/abhishekpanda0620/devsecops-platform-template.git
+    targetRevision: HEAD
+    path: infra/argocd/apps/observability
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

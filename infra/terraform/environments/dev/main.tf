@@ -2,12 +2,12 @@
 # This is an example environment setup for local testing
 
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.12.0"
 
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.0"
     }
   }
 
@@ -63,7 +63,7 @@ module "eks" {
   source = "../../modules/eks"
 
   cluster_name       = "devsecops-${var.environment}"
-  kubernetes_version = "1.28"
+  kubernetes_version = "1.34"
 
   vpc_id     = data.aws_vpc.default.id
   subnet_ids = data.aws_subnets.default.ids

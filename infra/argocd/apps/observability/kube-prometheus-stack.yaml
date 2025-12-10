@@ -1,0 +1,143 @@
+# ArgoCD Application for Kube Prometheus Stack
+# Uses official Helm chart directly from prometheus-community
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: observability
+    app.kubernetes.io/component: monitoring
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    # Official Prometheus Community Helm Chart
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: "55.5.0"  # Pin to specific version
+
+    helm:
+      releaseName: prometheus
+      # Values can be inline or from a file
+      values: |
+        # Prometheus Configuration
+        prometheus:
+          prometheusSpec:
+            retention: 15d
+            retentionSize: "10GB"
+            resources:
+              requests:
+                cpu: 200m
+                memory: 512Mi
+              limits:
+                cpu: 1000m
+                memory: 2Gi
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 20Gi
+            # Scrape all ServiceMonitors
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+
+        # Alertmanager Configuration
+        alertmanager:
+          enabled: true
+          alertmanagerSpec:
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+
+        # Grafana Configuration
+        grafana:
+          enabled: true
+          adminPassword: ""  # Set via secret
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          persistence:
+            enabled: true
+            size: 5Gi
+          # Pre-configured dashboards
+          dashboardProviders:
+            dashboardproviders.yaml:
+              apiVersion: 1
+              providers:
+                - name: 'default'
+                  orgId: 1
+                  folder: 'DevSecOps'
+                  type: file
+                  disableDeletion: false
+                  editable: true
+                  options:
+                    path: /var/lib/grafana/dashboards/default
+          dashboards:
+            default:
+              kubernetes-cluster:
+                gnetId: 7249
+                revision: 1
+                datasource: Prometheus
+              node-exporter:
+                gnetId: 1860
+                revision: 32
+                datasource: Prometheus
+          # Additional datasources for Loki
+          additionalDataSources:
+            - name: Loki
+              type: loki
+              access: proxy
+              url: http://loki.observability.svc:3100
+              jsonData:
+                maxLines: 1000
+
+        # Node Exporter
+        nodeExporter:
+          enabled: true
+
+        # Kube State Metrics
+        kubeStateMetrics:
+          enabled: true
+
+        # Default alerting rules
+        defaultRules:
+          create: true
+          rules:
+            alertmanager: true
+            kubernetesApps: true
+            kubernetesResources: true
+            kubernetesStorage: true
+            kubernetesSystem: true
+            node: true
+            prometheus: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

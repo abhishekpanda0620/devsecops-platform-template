@@ -1,0 +1,112 @@
+# ArgoCD Application for Loki Stack (Logging)
+# Uses official Grafana Helm chart
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki-stack
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: observability
+    app.kubernetes.io/component: logging
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    # Official Grafana Helm Chart Repository
+    repoURL: https://grafana.github.io/helm-charts
+    chart: loki-stack
+    targetRevision: "2.10.1"  # Pin to specific version
+
+    helm:
+      releaseName: loki
+      values: |
+        # Loki Configuration
+        loki:
+          enabled: true
+          persistence:
+            enabled: true
+            size: 10Gi
+          config:
+            auth_enabled: false
+            ingester:
+              chunk_idle_period: 3m
+              chunk_block_size: 262144
+              chunk_retain_period: 1m
+              max_transfer_retries: 0
+              lifecycler:
+                ring:
+                  replication_factor: 1
+            limits_config:
+              retention_period: 168h  # 7 days
+              enforce_metric_name: false
+              reject_old_samples: true
+              reject_old_samples_max_age: 168h
+              ingestion_rate_mb: 10
+              ingestion_burst_size_mb: 20
+              max_streams_per_user: 10000
+            schema_config:
+              configs:
+                - from: 2024-01-01
+                  store: boltdb-shipper
+                  object_store: filesystem
+                  schema: v12
+                  index:
+                    prefix: index_
+                    period: 24h
+            storage_config:
+              boltdb_shipper:
+                active_index_directory: /data/loki/boltdb-shipper-active
+                cache_location: /data/loki/boltdb-shipper-cache
+                shared_store: filesystem
+              filesystem:
+                directory: /data/loki/chunks
+            compactor:
+              working_directory: /data/loki/compactor
+              shared_store: filesystem
+              retention_enabled: true
+
+        # Promtail Configuration (Log collector)
+        promtail:
+          enabled: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          config:
+            snippets:
+              pipelineStages:
+                - cri: {}
+                - json:
+                    expressions:
+                      level: level
+                      msg: msg
+                - labels:
+                    level:
+
+        # Disable other components (we use kube-prometheus-stack)
+        grafana:
+          enabled: false  # Using grafana from kube-prometheus-stack
+        prometheus:
+          enabled: false
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

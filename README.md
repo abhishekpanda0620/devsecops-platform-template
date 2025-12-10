@@ -40,40 +40,47 @@ A **production-ready, opinionated DevSecOps framework** that provides a complete
 ```
 devsecops-platform-template/
 │
-├── .github/workflows/          # GitHub Actions CI/CD
-│   ├── ci.yml                  # Main CI pipeline
-│   ├── cd.yml                  # GitOps deployment
-│   ├── security.yml            # Security scans
-│   └── terraform.yml           # Infrastructure pipeline
+├── .pre-commit-config.yaml      # Pre-commit hooks (security + quality)
+├── .secrets.baseline            # Secret detection baseline
 │
-├── app/                        # Sample microservice
-│   ├── src/                    # Application source code
-│   ├── tests/                  # Unit & integration tests
-│   ├── Dockerfile              # Multi-stage Dockerfile
-│   └── package.json            # Dependencies
+├── .github/workflows/           # GitHub Actions CI/CD
+│   ├── ci.yml                   # Main CI pipeline
+│   ├── cd.yml                   # Continuous Delivery pipeline
+│   ├── security.yml             # Security scans (scheduled + on-demand)
+│   └── terraform.yml            # Infrastructure pipeline
 │
-├── security/                   # Security tools configuration
-│   ├── semgrep/                # SAST rules
-│   ├── gitleaks/               # Secret detection config
-│   ├── trivy/                  # Container scanning
-│   ├── syft/                   # SBOM generation
-│   ├── cosign/                 # Image signing
-│   └── checkov/                # IaC scanning
+├── app/                         # Sample microservice
+│   ├── src/                     # Application source code
+│   ├── tests/                   # Unit & integration tests
+│   ├── Dockerfile               # Multi-stage Dockerfile
+│   └── package.json             # Dependencies
 │
-├── infra/                      # Infrastructure as Code
-│   ├── terraform/              # Cloud modules (AWS/GCP/Azure)
-│   ├── k8s/                    # Kubernetes manifests
-│   ├── helm/                   # Helm charts
-│   └── argocd/                 # GitOps manifests
+├── security/                    # Security tools configuration
+│   ├── semgrep/                 # SAST rules
+│   ├── gitleaks/                # Secret detection config
+│   ├── trivy/                   # Container scanning
+│   └── checkov/                 # IaC scanning
 │
-├── runtime/                    # Runtime security
-│   ├── falco/                  # Runtime detection
-│   ├── opa-gatekeeper/         # Policy enforcement
-│   └── monitoring/             # Observability stack
+├── infra/                       # Infrastructure as Code
+│   ├── terraform/               # Cloud modules (AWS EKS)
+│   ├── k8s/                     # Kubernetes manifests (Kustomize)
+│   ├── helm/                    # Helm charts
+│   │   └── charts/observability/  # Prometheus, Grafana, Loki values
+│   └── argocd/                  # GitOps manifests
+│       └── apps/observability/  # Observability stack ArgoCD apps
 │
-├── sbom/                       # Software Bill of Materials
-├── docs/                       # Documentation
-└── Makefile                    # Automation commands
+├── runtime/                     # Runtime security
+│   ├── opa-gatekeeper/          # Kubernetes policy enforcement
+│   └── falco/                   # Runtime threat detection
+│
+├── docs/                        # Documentation
+│   ├── PROJECT_OVERVIEW.md      # Complete project explanation
+│   ├── observability.md         # Monitoring/logging guide
+│   ├── pre-commit.md            # Pre-commit hooks guide
+│   └── ...                      # Architecture, security, etc.
+│
+├── sbom/                        # Software Bill of Materials
+└── Makefile                     # Automation commands
 ```
 
 ---
@@ -137,14 +144,32 @@ make deploy-argocd
 
 ## 📊 Observability Stack
 
-- **Prometheus** — Metrics collection and alerting
-- **Grafana** — Visualization dashboards
-- **Loki** — Log aggregation
-- **Alertmanager** — Alert routing and notifications
+| Component | Purpose | Access |
+|-----------|---------|--------|
+| **Prometheus** | Metrics collection and alerting | `make observability-portforward` |
+| **Grafana** | Visualization dashboards | Port 3000 |
+| **Loki** | Log aggregation | Integrated in Grafana |
+| **Alertmanager** | Alert routing and notifications | Port 9093 |
+| **Tempo** | Distributed tracing (optional) | Port 3100 |
+
+```bash
+# Install via ArgoCD (GitOps - recommended)
+make observability-argocd
+
+# Or install via Helm directly
+make observability-install
+
+# Access Grafana
+make observability-portforward
+```
 
 ---
 
-## 🔄 GitOps Workflow
+## 🔄 GitOps Workflow (Continuous Delivery)
+
+This project implements **Continuous Delivery** (not Continuous Deployment):
+- ✅ **Staging**: Automatic deployment on tag push
+- ⏸️ **Production**: Requires manual approval (industry best practice)
 
 ```
 ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
@@ -156,6 +181,14 @@ make deploy-argocd
                          ArgoCD Sync
 ```
 
+| Stage | Trigger | Automatic? |
+|-------|---------|------------|
+| Dev | Push to main | ✅ Yes |
+| Staging | Tag push (v*) | ✅ Yes |
+| Production | After staging + approval | ⏸️ Manual |
+
+> **Why Continuous Delivery?** Most enterprises require human approval before production changes. This is the recommended approach for risk management and compliance.
+
 ---
 
 ## 📚 Documentation
@@ -165,7 +198,26 @@ make deploy-argocd
 - [Security Guide](docs/security.md)
 - [GitOps Setup](docs/gitops.md)
 - [Setup Guide](docs/setup-guide.md)
+- [Observability Stack](docs/observability.md)
+- [Pre-commit Hooks](docs/pre-commit.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Project Overview](docs/PROJECT_OVERVIEW.md)
+
+---
+
+## 🪝 Pre-commit Hooks
+
+Enforce code quality and security locally:
+
+```bash
+# Install pre-commit hooks
+make pre-commit-install
+
+# Run on all files
+make pre-commit-run
+```
+
+Includes: Gitleaks, Semgrep, ESLint, Terraform fmt/validate, Checkov, Hadolint, and more.
 
 ---
 
@@ -187,4 +239,4 @@ Give a ⭐️ if this project helped you!
 
 ---
 
-*Built with ❤️ by the DevSecOps community*
+*Built with ❤️ for the DevSecOps community*
