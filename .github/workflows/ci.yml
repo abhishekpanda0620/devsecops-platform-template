@@ -155,6 +155,7 @@ jobs:
       contents: read
       packages: write
       security-events: write
+      id-token: write  # Required for OIDC
 
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
