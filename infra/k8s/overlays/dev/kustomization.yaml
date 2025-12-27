@@ -8,6 +8,9 @@ resources:
   - ../../base
   - namespace.yaml
 
+patchesStrategicMerge:
+  - service-patch.yaml
+
 images:
   - name: user-service
     newName: ghcr.io/abhishekpanda0620/devsecops-platform-template/user-service
