@@ -57,6 +57,7 @@ jobs:
       environment: ${{ steps.params.outputs.environment }}
       version: ${{ steps.params.outputs.version }}
       image: ${{ steps.params.outputs.image }}
+      repo_name: ${{ steps.params.outputs.repo_name }}
 
     steps:
       - name: Determine parameters
