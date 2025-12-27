@@ -1,0 +1,56 @@
+# Foundation Layer - Terraform Outputs
+# =====================================
+# These outputs are exported after `terraform apply` completes.
+# They are also available to the Addons layer via `terraform_remote_state`.
+
+## EKS Cluster
+| Output Name                          | Description                               |
+|--------------------------------------|-------------------------------------------|
+| cluster_name                         | EKS cluster name                          |
+| cluster_endpoint                     | EKS cluster API endpoint URL              |
+| cluster_certificate_authority_data   | Base64 encoded CA certificate for kubeconfig |
+| oidc_provider_arn                    | OIDC Provider ARN for IRSA                |
+| oidc_provider_url                    | OIDC Provider URL for IRSA                |
+
+## IAM / Security
+| Output Name                          | Description                               |
+|--------------------------------------|-------------------------------------------|
+| github_actions_role_arn              | IAM Role ARN to add to GitHub Secrets (`AWS_ROLE_ARN`) |
+
+## ECR (Container Registry)
+| Output Name                          | Description                               |
+|--------------------------------------|-------------------------------------------|
+| ecr_repository_url                   | Full URL to push Docker images            |
+| ecr_repository_name                  | Name of the ECR repository                |
+
+## VPC / Networking
+| Output Name                          | Description                               |
+|--------------------------------------|-------------------------------------------|
+| vpc_id                               | ID of the VPC                             |
+| subnet_ids                           | List of Subnet IDs used by EKS            |
+
+---
+
+## Usage After Apply
+
+After running `terraform apply` in the `foundation` directory, you can retrieve these values:
+
+```bash
+# Get all outputs
+terraform output
+
+# Get a specific output (e.g., for GitHub Secrets)
+terraform output -raw github_actions_role_arn
+
+# Get cluster name for kubectl config
+terraform output -raw cluster_name
+```
+
+## Important Outputs for Next Steps
+
+1.  **`github_actions_role_arn`**: Copy this and add it to GitHub Secrets as `AWS_ROLE_ARN`.
+2.  **`cluster_name`**: Use this to configure `kubectl`:
+    ```bash
+    aws eks update-kubeconfig --name $(terraform output -raw cluster_name) --region us-east-1
+    ```
+3.  **`ecr_repository_url`**: Use this in your CI pipeline to push Docker images.

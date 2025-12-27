@@ -1,0 +1,15 @@
+# General
+aws_region   = "us-east-1"
+environment  = "dev"
+
+# State Configuration (Must match Foundation)
+tf_state_bucket = "devsecops-platform-template"
+
+# GitOps
+enable_aws_managed_gitops = false
+enable_helm_argocd        = true
+gitops_repo_url           = "https://github.com/abhishekpanda0620/devsecops-platform-template"
+
+# Advanced Controllers
+enable_ack = false
+enable_kro = false
