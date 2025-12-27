@@ -63,15 +63,43 @@ jobs:
         working-directory: infra/terraform
         continue-on-error: true
 
-      - name: Terraform Init
-        id: init
-        run: terraform init -backend=false
-        working-directory: infra/terraform/environments/dev
+      # -----------------------------------------------------------------------
+      # Foundation Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Foundation
+        id: init-foundation
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/dev/foundation/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/dev/foundation
 
-      - name: Terraform Validate
-        id: validate
+      - name: Terraform Validate - Foundation
+        id: validate-foundation
         run: terraform validate -no-color
-        working-directory: infra/terraform/environments/dev
+        working-directory: infra/terraform/environments/dev/foundation
+
+      # -----------------------------------------------------------------------
+      # Addons Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Addons
+        id: init-addons
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/dev/addons/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/dev/addons
+
+      - name: Terraform Validate - Addons
+        id: validate-addons
+        run: terraform validate -no-color
+        working-directory: infra/terraform/environments/dev/addons
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'
@@ -145,23 +173,50 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       # Configure AWS credentials (uncomment for real deployment)
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-      #     aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Terraform Init
-        run: terraform init
-        working-directory: infra/terraform/environments/${{ matrix.environment }}
-        env:
-          TF_CLI_ARGS_init: "-backend=false"
+      # -----------------------------------------------------------------------
+      # Foundation Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Foundation
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ matrix.environment }}/foundation/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ matrix.environment }}/foundation
 
-      - name: Terraform Plan
-        id: plan
+      - name: Terraform Plan - Foundation
+        id: plan-foundation
         run: |
           terraform plan -no-color -out=tfplan 2>&1 | tee plan.txt
-        working-directory: infra/terraform/environments/${{ matrix.environment }}
+        working-directory: infra/terraform/environments/${{ matrix.environment }}/foundation
+        continue-on-error: true
+
+      # -----------------------------------------------------------------------
+      # Addons Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Addons
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ matrix.environment }}/addons/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ matrix.environment }}/addons
+
+      - name: Terraform Plan - Addons
+        id: plan-addons
+        run: |
+          terraform plan -no-color -out=tfplan 2>&1 | tee plan.txt
+        working-directory: infra/terraform/environments/${{ matrix.environment }}/addons
         continue-on-error: true
 
       - name: Upload Plan
@@ -224,21 +279,45 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       # Configure AWS credentials (uncomment for real deployment)
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-      #     aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Terraform Init
-        run: terraform init
-        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}
-        env:
-          TF_CLI_ARGS_init: "-backend=false"
+      # -----------------------------------------------------------------------
+      # Foundation Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Foundation
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ github.event.inputs.environment }}/foundation/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/foundation
 
-      - name: Terraform Apply
+      - name: Terraform Apply - Foundation
         run: terraform apply -auto-approve
-        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/foundation
+
+      # -----------------------------------------------------------------------
+      # Addons Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Addons
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ github.event.inputs.environment }}/addons/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/addons
+
+      - name: Terraform Apply - Addons
+        run: terraform apply -auto-approve
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/addons
 
   # ===========================================
   # Terraform Destroy (requires approval)
@@ -261,12 +340,36 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Terraform Init
-        run: terraform init
-        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}
-        env:
-          TF_CLI_ARGS_init: "-backend=false"
+      # -----------------------------------------------------------------------
+      # Addons Layer (Destroy First)
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Addons
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ github.event.inputs.environment }}/addons/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/addons
 
-      - name: Terraform Destroy
+      - name: Terraform Destroy - Addons
         run: terraform destroy -auto-approve
-        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/addons
+
+      # -----------------------------------------------------------------------
+      # Foundation Layer (Destroy Last)
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Foundation
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ github.event.inputs.environment }}/foundation/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/foundation
+
+      - name: Terraform Destroy - Foundation
+        run: terraform destroy -auto-approve
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/foundation
