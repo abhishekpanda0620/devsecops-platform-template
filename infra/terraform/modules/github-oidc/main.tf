@@ -74,3 +74,42 @@ resource "aws_iam_role_policy" "describe_cluster" {
     ]
   })
 }
+
+# Allow S3 access for Terraform state
+resource "aws_iam_role_policy" "terraform_state" {
+  name = "terraform-s3-state-access"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+          "s3:GetBucketVersioning"
+        ]
+        Resource = "arn:aws:s3:::*-tf-state-*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "arn:aws:s3:::*-tf-state-*/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
+        ]
+        Resource = "arn:aws:dynamodb:*:*:table/terraform-lock"
+      }
+    ]
+  })
+}
