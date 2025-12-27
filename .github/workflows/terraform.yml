@@ -1,0 +1,391 @@
+# Terraform Pipeline - Infrastructure as Code workflow
+# Handles plan, apply, and destroy operations with approvals
+
+name: Terraform
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/terraform/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/terraform/**'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform action to perform'
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+env:
+  TF_VERSION: '1.14.1'
+  AWS_REGION: 'us-east-1'
+
+jobs:
+  # ===========================================
+  # Terraform Format & Validate
+  # ===========================================
+  validate:
+    name: 📝 Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        working-directory: infra/terraform
+        continue-on-error: true
+
+      # -----------------------------------------------------------------------
+      # Foundation Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Foundation
+        id: init-foundation
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/dev/foundation/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/dev/foundation
+
+      - name: Terraform Validate - Foundation
+        id: validate-foundation
+        run: terraform validate -no-color
+        working-directory: infra/terraform/environments/dev/foundation
+
+      # -----------------------------------------------------------------------
+      # Addons Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Addons
+        id: init-addons
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/dev/addons/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/dev/addons
+
+      - name: Terraform Validate - Addons
+        id: validate-addons
+        run: terraform validate -no-color
+        working-directory: infra/terraform/environments/dev/addons
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  # ===========================================
+  # Security Scan
+  # ===========================================
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: [validate]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infra/terraform/
+          framework: terraform
+          output_format: cli,sarif
+          output_file_path: console,checkov-tf.sarif
+          soft_fail: true
+
+      - name: Upload Checkov results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-tf.sarif
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: infra/terraform/
+          soft_fail: true
+
+  # ===========================================
+  # Terraform Plan
+  # ===========================================
+  plan:
+    name: 📋 Plan
+    runs-on: ubuntu-latest
+    needs: [validate, security]
+    strategy:
+      matrix:
+        environment: [dev]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # Configure AWS credentials (uncomment for real deployment)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # -----------------------------------------------------------------------
+      # Foundation Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Foundation
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ matrix.environment }}/foundation/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ matrix.environment }}/foundation
+
+      - name: Terraform Plan - Foundation
+        id: plan-foundation
+        run: |
+          terraform plan -no-color -out=tfplan-foundation 2>&1 | tee plan-foundation.txt
+        working-directory: infra/terraform/environments/${{ matrix.environment }}/foundation
+        continue-on-error: true
+
+      # Auto-Apply Foundation on Push to Main (Dev only)
+      - name: Terraform Apply - Foundation (Auto)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.environment == 'dev'
+        run: terraform apply -auto-approve tfplan-foundation
+        working-directory: infra/terraform/environments/${{ matrix.environment }}/foundation
+
+      # -----------------------------------------------------------------------
+      # Addons Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Addons
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ matrix.environment }}/addons/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ matrix.environment }}/addons
+
+      - name: Terraform Plan - Addons
+        id: plan-addons
+        run: |
+          terraform plan -no-color -out=tfplan-addons 2>&1 | tee plan-addons.txt
+        working-directory: infra/terraform/environments/${{ matrix.environment }}/addons
+        continue-on-error: true
+
+      - name: Upload Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ matrix.environment }}
+          path: |
+            infra/terraform/environments/${{ matrix.environment }}/tfplan
+            infra/terraform/environments/${{ matrix.environment }}/plan.txt
+
+      - name: Comment Plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('infra/terraform/environments/${{ matrix.environment }}/plan.txt', 'utf8');
+            const truncatedPlan = plan.length > 60000 ? plan.substring(0, 60000) + '\n... (truncated)' : plan;
+
+            const output = `#### Terraform Plan for \`${{ matrix.environment }}\` 📋
+
+            <details>
+            <summary>Show Plan</summary>
+
+            \`\`\`terraform
+            ${truncatedPlan}
+            \`\`\`
+
+            </details>
+
+            *Plan generated by: @${{ github.actor }}*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      # -----------------------------------------------------------------------
+      # Auto-Apply Addons on Push to Main (Dev only)
+      # Foundation requires manual approval, Addons auto-deploy for fast iteration
+      # -----------------------------------------------------------------------
+      - name: Terraform Apply - Addons (Auto)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.environment == 'dev'
+        run: terraform apply -auto-approve tfplan-addons
+        working-directory: infra/terraform/environments/${{ matrix.environment }}/addons
+
+
+  # ===========================================
+  # Terraform Apply (requires approval)
+  # ===========================================
+  apply:
+    name: 🚀 Apply
+    runs-on: ubuntu-latest
+    needs: [plan]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.action == 'apply'
+    environment:
+      name: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # Configure AWS credentials (uncomment for real deployment)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # -----------------------------------------------------------------------
+      # Foundation Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Foundation
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ github.event.inputs.environment }}/foundation/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/foundation
+
+      - name: Terraform Apply - Foundation
+        run: terraform apply -auto-approve
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/foundation
+
+      # -----------------------------------------------------------------------
+      # Addons Layer
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Addons
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ github.event.inputs.environment }}/addons/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/addons
+
+      - name: Terraform Apply - Addons
+        run: terraform apply -auto-approve
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/addons
+
+  # ===========================================
+  # Terraform Destroy (requires approval)
+  # ===========================================
+  destroy:
+    name: 💥 Destroy
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.action == 'destroy'
+    environment:
+      name: ${{ github.event.inputs.environment }}-destroy
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # -----------------------------------------------------------------------
+      # Addons Layer (Destroy First)
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Addons
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ github.event.inputs.environment }}/addons/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/addons
+
+      - name: Terraform Destroy - Addons
+        run: terraform destroy -auto-approve
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/addons
+
+      # -----------------------------------------------------------------------
+      # Foundation Layer (Destroy Last)
+      # -----------------------------------------------------------------------
+      - name: Terraform Init - Foundation
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=devsecops/${{ github.event.inputs.environment }}/foundation/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/foundation
+
+      - name: Terraform Destroy - Foundation
+        run: terraform destroy -auto-approve
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}/foundation
