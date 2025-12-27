@@ -13,6 +13,66 @@ GitOps is a way of implementing Continuous Deployment for cloud-native applicati
 3. **Pulled automatically** - Approved changes are automatically applied
 4. **Continuously reconciled** - Agents ensure correctness continuously
 
+## GitOps Options
+
+This platform supports **two GitOps deployment approaches**:
+
+### Option 1: AWS EKS Managed GitOps (Recommended for AWS)
+
+AWS recently announced **EKS Capabilities** which includes fully managed GitOps:
+
+| Component | Description |
+|-----------|-------------|
+| **Managed Argo CD** | AWS-managed Argo CD as an EKS addon |
+| **ACK** | AWS Controllers for Kubernetes - manage AWS resources from K8s |
+| **KRO** | Kube Resource Orchestrator - reusable resource bundles |
+
+**Benefits:**
+- ✅ AWS handles upgrades and security patches
+- ✅ Integrated with EKS console
+- ✅ Native AWS IAM authentication via IRSA
+- ✅ Reduced operational overhead
+
+**When to use:**
+- Running exclusively on AWS EKS
+- Want minimal GitOps management overhead
+- Need tight AWS service integration
+
+**Setup:** See `infra/terraform/modules/eks-gitops/`
+
+### Option 2: Self-Managed ArgoCD (Recommended for Multi-Cloud)
+
+Traditional self-managed ArgoCD installation:
+
+**Benefits:**
+- ✅ Full customization (plugins, SSO, RBAC)
+- ✅ Works on any Kubernetes cluster (EKS, GKE, AKS, on-prem)
+- ✅ Complete control over upgrades
+- ✅ Mature and widely documented
+
+**When to use:**
+- Multi-cloud or hybrid deployments
+- Need custom ArgoCD plugins
+- Want full control over configuration
+- Using non-AWS Kubernetes
+
+**Setup:** See `infra/argocd/`
+
+### Comparison Matrix
+
+| Feature | AWS Managed Argo CD | Self-Managed ArgoCD |
+|---------|---------------------|---------------------|
+| **Upgrades** | AWS handles | You manage |
+| **Patching** | Automatic | Manual |
+| **Customization** | Limited | Full control |
+| **Multi-cloud** | ❌ AWS only | ✅ Any K8s |
+| **Cost** | Included in EKS | Free (OSS) |
+| **Custom Plugins** | Limited | Fully customizable |
+| **SSO Options** | AWS IAM | OIDC/SAML/LDAP/GitHub |
+| **Maturity** | New (2024) | Production-proven |
+
+---
+
 ## Architecture
 
 ```
@@ -37,7 +97,11 @@ GitOps is a way of implementing Continuous Deployment for cloud-native applicati
 
 ## ArgoCD Setup
 
-### Installation
+Choose one of the following approaches based on your requirements.
+
+### Option A: Self-Managed ArgoCD (Multi-Cloud)
+
+#### Installation
 
 ```bash
 # Create namespace
@@ -50,7 +114,7 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
-### Initial Configuration
+#### Initial Configuration
 
 ```bash
 # Get initial admin password
@@ -63,6 +127,71 @@ argocd login localhost:8080
 # Change password
 argocd account update-password
 ```
+
+### Option B: AWS EKS Managed ArgoCD (AWS Only)
+
+#### Prerequisites
+
+- AWS EKS cluster with OIDC provider enabled
+- Terraform >= 1.14.0
+
+#### Terraform Setup
+
+```hcl
+# In your Terraform configuration
+module "eks_gitops" {
+  source = "./infra/terraform/modules/eks-gitops"
+
+  cluster_name      = module.eks.cluster_name
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
+
+  # Enable AWS Managed Argo CD
+  enable_managed_argocd = true
+
+  # Optional: Enable AWS Controllers for Kubernetes
+  enable_ack = true
+
+  # Optional: Enable Kube Resource Orchestrator
+  enable_kro = false
+
+  # GitOps repository configuration
+  gitops_repo_url        = "https://github.com/your-org/your-repo.git"
+  gitops_target_revision = "main"
+  gitops_apps_path       = "infra/argocd/apps"
+
+  tags = var.tags
+}
+```
+
+#### Deploy
+
+```bash
+cd infra/terraform/environments/dev
+terraform init
+terraform plan
+terraform apply
+```
+
+#### Access ArgoCD
+
+With AWS Managed ArgoCD, access is integrated with the AWS EKS console:
+
+1. Navigate to **Amazon EKS** in AWS Console
+2. Select your cluster
+3. Go to **Add-ons** tab
+4. Click on **Argo CD** to access the dashboard
+
+Or via kubectl:
+
+```bash
+# Get the ArgoCD server URL
+kubectl get svc -n argocd argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+
+# For IRSA-based authentication, use AWS credentials
+aws eks get-token --cluster-name your-cluster | argocd login ...
+```
+
 
 ## App of Apps Pattern
 
@@ -391,6 +520,14 @@ argocd app sync <app-name>
 
 ## References
 
+### Self-Managed ArgoCD
 - [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
 - [GitOps Principles](https://opengitops.dev/)
 - [Kustomize](https://kustomize.io/)
+
+### AWS EKS Managed GitOps
+- [AWS EKS Capabilities](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
+- [AWS Controllers for Kubernetes (ACK)](https://aws-controllers-k8s.github.io/community/)
+- [Kube Resource Orchestrator (KRO)](https://github.com/awslabs/kro)
+- [EKS IRSA (IAM Roles for Service Accounts)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+

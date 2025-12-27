@@ -61,6 +61,13 @@ The CI/CD pipeline is implemented using GitHub Actions and consists of the follo
 
 ### 2. GitOps Deployment
 
+The platform supports **two GitOps approaches**:
+
+| Approach | Best For | Setup Location |
+|----------|----------|----------------|
+| **AWS EKS Managed Argo CD** | AWS-only deployments | `infra/terraform/modules/eks-gitops/` |
+| **Self-Managed ArgoCD** | Multi-cloud / On-prem | `infra/argocd/` |
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                       GitOps Flow                                │
@@ -86,6 +93,11 @@ The CI/CD pipeline is implemented using GitHub Actions and consists of the follo
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+> **Note:** AWS EKS Managed Argo CD (announced at re:Invent 2024) provides AWS-managed
+> upgrades, patching, and console integration. For multi-cloud deployments, use
+> self-managed ArgoCD. See [gitops.md](gitops.md) for detailed setup instructions.
+
 
 ### 3. Security Layers
 
