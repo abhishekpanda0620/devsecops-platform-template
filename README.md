@@ -51,7 +51,17 @@ devsecops-platform-template/
 │   └── checkov/                 # IaC scanning
 │
 ├── infra/                       # Infrastructure as Code
-│   ├── terraform/               # Cloud modules (AWS EKS)
+│   ├── terraform/               # Cloud infrastructure
+│   │   ├── environments/
+│   │   │   └── dev/
+│   │   │       ├── foundation/  # VPC, EKS, ECR, OIDC (Layer 1)
+│   │   │       └── addons/      # ArgoCD, GitOps (Layer 2)
+│   │   └── modules/
+│   │       ├── vpc/             # Enterprise VPC module
+│   │       ├── eks/             # EKS cluster module
+│   │       ├── ecr/             # Container registry module
+│   │       ├── github-oidc/     # GitHub Actions OIDC auth
+│   │       └── eks-gitops/      # ArgoCD/GitOps module
 │   ├── k8s/                     # Kubernetes manifests (Kustomize)
 │   ├── helm/                    # Helm charts
 │   │   └── charts/observability/  # Prometheus, Grafana, Loki values
