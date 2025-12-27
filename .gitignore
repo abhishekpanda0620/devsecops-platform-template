@@ -70,3 +70,6 @@ docker-compose.override.yml
 # terraform
 terraform.tfstate
 terraform.tfstate.*
+
+# Terraform Backend Config
+*.tfbackend
