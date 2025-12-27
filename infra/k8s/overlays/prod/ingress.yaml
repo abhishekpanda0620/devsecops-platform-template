@@ -6,11 +6,21 @@ metadata:
   labels:
     app: user-service
   annotations:
-    kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    nginx.ingress.kubernetes.io/rate-limit: "100"
-    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    # kubernetes.io/ingress.class: nginx
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    # nginx.ingress.kubernetes.io/rate-limit: "100"
+    # nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    # SSL Redirect is handled by the listen-ports and actions, simplified here:
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # Note: ALB requires an ACM Certificate ARN or auto-discovery. 
+    # cert-manager integration with ALB is different from NGINX.
+    # For now, we keep the cert-manager annotation but ALB ignoring it might cause issues if no cert is found.
+    # You may need to secure this with: alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account:certificate/xxx
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:

@@ -13,11 +13,14 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow traffic from ingress controller
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              name: ingress-nginx
+    # Allow traffic from ALB (VPC CIDR or 0.0.0.0/0 on specific port)
+    # Since ALB target-type is IP, traffic comes from the VPC subnets.
+    # We allow traffic from all sources on the service port, relying on Security Groups for control.
+    - from: []
+    # - from:
+    #     - namespaceSelector:
+    #         matchLabels:
+    #           name: ingress-nginx
       ports:
         - protocol: TCP
           port: 3000

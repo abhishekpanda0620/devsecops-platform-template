@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-notifications-controller
+    app.kubernetes.io/part-of: argocd
+data:
+  # Configuration for Slack service
+  # Configuration for Slack Webhook (simpler setup)
+  service.webhook.slack: |
+    url: $slack-token
+    headers:
+    - name: Content-Type
+      value: application/json
+    defaultIcon: :rocket:
+    defaultUsername: ArgoCD
+
+  # Template triggers
+  trigger.on-sync-succeeded: |
+    - description: Application syncing has succeeded
+      send: [app-sync-succeeded]
+      when: app.status.operationState.phase in ['Succeeded']
+
+  trigger.on-sync-failed: |
+    - description: Application syncing has failed
+      send: [app-sync-failed]
+      when: app.status.operationState.phase in ['Error', 'Failed']
+
+  trigger.on-health-degraded: |
+    - description: Application has degraded
+      send: [app-health-degraded]
+      when: app.status.health.status == 'Degraded'
+
+  # Notification templates
+  # Notification templates for Webhooks
+  template.app-sync-succeeded: |
+    body: |
+      {
+        "text": "✅ Application {{.app.metadata.name}} has been successfully synced.\n\n*Project:* {{.app.spec.project}}\n*Source:* {{.app.spec.source.repoURL}}\n*Revision:* {{.app.spec.source.targetRevision}}\n\n<{{.context.argocdUrl}}/applications/{{.app.metadata.name}}|View Application>"
+      }
+
+  template.app-sync-failed: |
+    body: |
+      {
+        "text": "❌ Application {{.app.metadata.name}} sync failed.\n\n*Error:* {{.app.status.operationState.message}}\n\n<{{.context.argocdUrl}}/applications/{{.app.metadata.name}}|View Application>"
+      }
+
+  template.app-health-degraded: |
+    body: |
+      {
+        "text": "⚠️ Application {{.app.metadata.name}} health is degraded.\n\n*Health Stats:* {{.app.status.health.status}}\n\n<{{.context.argocdUrl}}/applications/{{.app.metadata.name}}|View Application>"
+      }
