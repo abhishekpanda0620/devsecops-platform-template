@@ -5,7 +5,7 @@
 [![EOL Check](https://github.com/abhishekpanda0620/devsecops-platform-template/actions/workflows/eol-check.yml/badge.svg)](https://github.com/abhishekpanda0620/devsecops-platform-template/actions/workflows/eol-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**📖 Read the Blog Series**: [Part 1: Infrastructure](https://medium.com/@abhishek.panda0620/how-i-built-a-production-grade-devsecops-platform-so-you-dont-have-to-b91b1c1558d6) | [Part 2: GitOps](pending) | [Part 3: Security](pending)
+**📖 Read the Blog Series**: [Part 1: Infrastructure](https://medium.com/@abhishek.panda0620/how-i-built-a-production-grade-devsecops-platform-so-you-dont-have-to-b91b1c1558d6) | [Part 2: GitOps (pending)](pending) | [Part 3: Security (pending)](pending)
 
 A **production-ready, opinionated DevSecOps framework** that provides a complete CI/CD + security + GitOps + Kubernetes deployment template for any application.
 
