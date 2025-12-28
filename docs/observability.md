@@ -117,6 +117,8 @@ kubectl port-forward -n observability svc/prometheus-kube-prometheus-alertmanage
 # Open http://localhost:9093
 ```
 
+![Alertmanager UI](../screenshots/alertmanager-ui-filter.png)
+
 ## Pre-configured Dashboards
 
 The stack includes the following dashboards:
@@ -126,6 +128,8 @@ The stack includes the following dashboards:
 | Kubernetes Cluster | 7249 | Cluster-wide metrics |
 | Node Exporter | 1860 | Node-level metrics |
 | User Service | Custom | Application-specific metrics |
+
+![Grafana Node Exporter](../screenshots/grafana-node-exporter.png)
 
 ### Custom Application Dashboard
 

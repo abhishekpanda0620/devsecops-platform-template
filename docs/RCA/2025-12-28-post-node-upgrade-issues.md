@@ -1,7 +1,7 @@
 # RCA: Node Upgrade Broke Everything
 
-**Date:** 2025-12-28  
-**Author:** Abhishek Panda  
+**Date:** 2025-12-28
+**Author:** Abhishek Panda
 **Duration:** ~2 hours
 
 ## What Happened
@@ -16,7 +16,8 @@ Checked with `kubectl get pvc -A` - everything was Pending. Prometheus, Grafana,
 
 **Why:** No EBS CSI driver installed. We had the old gp2 StorageClass but Helm charts were asking for gp3. Without the CSI driver, gp3 doesn't work.
 
-**Fix:** 
+**Fix:**
+
 - Added EBS CSI driver addon to the EKS terraform module
 - Created gp3 StorageClass
 - Applied terraform, storage started working
@@ -24,6 +25,7 @@ Checked with `kubectl get pvc -A` - everything was Pending. Prometheus, Grafana,
 ### 2. Falco pods crashing
 
 `kubectl logs` showed:
+
 ```
 Error: unable to mmap the perf-buffer for cpu '0': Cannot allocate memory
 ```
@@ -37,15 +39,18 @@ Error: unable to mmap the perf-buffer for cpu '0': Cannot allocate memory
 Service had external IP but curl was timing out. Checked the IP - it was internal (10.0.x.x). Classic ELB was created instead of ALB.
 
 Also found this in events:
+
 ```
 AccessDenied: elasticloadbalancing:AddTags on resource: .../listener/...
 ```
 
 **Why:** Two problems:
+
 1. LB Controller IAM policy missing listener permissions
 2. Service was creating legacy Classic ELB, not using the LB Controller
 
 **Fix:**
+
 - Added listener ARNs to IAM policy
 - Switched from LoadBalancer service type to Ingress with ALB annotations
 - Deleted the old Classic ELB
@@ -55,10 +60,12 @@ AccessDenied: elasticloadbalancing:AddTags on resource: .../listener/...
 Pipeline kept waiting for ingress URL.
 
 **Why:** Two things:
+
 1. smoke-test.sh was hitting `http://user-service.dev:3000` which doesn't exist from GitHub runners
 2. GitHub Actions IAM role wasn't in aws-auth ConfigMap so kubectl couldn't talk to the cluster
 
 **Fix:**
+
 - Updated cd.yml to get actual ingress URL from cluster
 - Added GitHub Actions role to aws-auth with system:masters
 
