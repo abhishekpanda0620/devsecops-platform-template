@@ -31,7 +31,7 @@ devsecops-platform-template/
 │   ├── helm/             # Helm charts for observability
 │   ├── k8s/              # Kubernetes manifests
 │   └── terraform/        # Cloud infrastructure (AWS EKS)
-├── runtime/              # Runtime security (OPA Gatekeeper)
+
 ├── security/             # Security tool configurations
 └── Makefile              # Automation commands
 ```
@@ -59,7 +59,7 @@ devsecops-platform-template/
 | **ESLint** | JavaScript code quality | Finds bugs and security issues in JS |
 | **Hadolint** | Dockerfile linting | Ensures Docker best practices |
 | **Terraform fmt/validate** | IaC formatting and syntax | Consistent, valid Terraform code |
-| **Checkov** | IaC security scanning | Finds misconfigurations before deployment |
+
 | **Kubeconform** | K8s manifest validation | Catches invalid YAML before apply |
 | **Semgrep** | Static analysis (SAST) | Finds security vulnerabilities in code |
 | **Commitizen** | Commit message format | Enforces conventional commits for changelog |
@@ -80,11 +80,10 @@ devsecops-platform-template/
 
 ```
 ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-│   Secrets   │──▶│    SAST     │──▶│     SCA     │──▶│     IaC     │
-│  Detection  │   │   Analysis  │   │Dependencies │   │   Scanning  │
+│   Secrets   │──▶│    SAST     │──▶│     SCA     │            │
+│  Detection  │   │   Analysis  │   │Dependencies │            │
 └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘
-    Gitleaks         Semgrep          Trivy           Checkov
-                     CodeQL                            KICS
+    Gitleaks         Semgrep          Trivy
 ```
 
 | Scan Type | Tool | What It Finds |
@@ -92,7 +91,7 @@ devsecops-platform-template/
 | **Secrets** | Gitleaks, TruffleHog | Hardcoded passwords, API keys |
 | **SAST** | Semgrep, CodeQL | SQL injection, XSS, insecure code patterns |
 | **SCA** | Trivy, Snyk | Vulnerable dependencies (CVEs) |
-| **IaC** | Checkov, KICS | Misconfigured infrastructure |
+
 | **Container** | Trivy, Grype | Vulnerable base images, packages |
 | **License** | license-checker | GPL/copyleft license violations |
 
@@ -119,7 +118,7 @@ devsecops-platform-template/
 | `security/gitleaks/` | Gitleaks | Custom rules, allowlists |
 | `security/semgrep/` | Semgrep | Custom SAST rules |
 | `security/trivy/` | Trivy | Severity thresholds, ignore lists |
-| `security/checkov/` | Checkov | Policy exceptions |
+
 
 ---
 
@@ -147,17 +146,9 @@ devsecops-platform-template/
 
 **What**: Security controls that run IN the Kubernetes cluster.
 
-| Component | Tool | Purpose |
-|-----------|------|---------|
-| **Policy Enforcement** | OPA Gatekeeper | Blocks non-compliant deployments |
-| **Runtime Detection** | Falco | Detects suspicious activity in running containers |
 
-**OPA Gatekeeper Policies** (`runtime/opa-gatekeeper/`):
 
-- Block containers running as root
-- Require resource limits
-- Enforce image registry whitelists
-- Require specific labels
+
 
 ---
 
@@ -299,7 +290,7 @@ base/           ◄── Common configuration
 | `apps/user-service-dev.yaml` | Dev deployment of user-service |
 | `apps/user-service-prod.yaml` | Prod deployment of user-service |
 | `apps/observability.yaml` | Observability stack (Prometheus, Loki) |
-| `apps/falco.yaml` | Runtime security |
+
 
 **App-of-Apps Pattern**:
 
@@ -310,9 +301,7 @@ root-app
     ├── user-service-prod
     ├── observability-stack
     │       ├── kube-prometheus-stack
-    │       ├── loki-stack
-    │       └── tempo
-    └── falco
+    │       └── loki-stack
 ```
 
 ---
@@ -325,7 +314,7 @@ You can't secure or fix what you can't see. Observability answers:
 
 - **Metrics**: Is the system healthy? (Prometheus)
 - **Logs**: What happened? (Loki)
-- **Traces**: Why is it slow? (Tempo)
+
 
 ### Components
 
@@ -336,7 +325,7 @@ You can't secure or fix what you can't see. Observability answers:
 | **Logs** | Loki | Aggregates logs from all pods |
 | **Log Collection** | Promtail | Ships logs to Loki |
 | **Alerting** | Alertmanager | Routes alerts to Slack/PagerDuty |
-| **Tracing** | Tempo | Distributed request tracing (optional) |
+
 
 ### How They Work Together
 
@@ -357,7 +346,7 @@ Application Pod
 |------|---------|
 | `infra/argocd/apps/observability/kube-prometheus-stack.yaml` | Prometheus + Grafana + Alertmanager |
 | `infra/argocd/apps/observability/loki-stack.yaml` | Log aggregation |
-| `infra/argocd/apps/observability/tempo.yaml` | Distributed tracing |
+
 | `infra/helm/charts/observability/values.yaml` | Default configuration |
 | `infra/helm/charts/observability/values-dev.yaml` | Dev (lightweight) config |
 | `infra/helm/charts/observability/values-prod.yaml` | Prod (HA) config |
@@ -480,11 +469,10 @@ Developer writes code
 | Gitleaks/TruffleHog | API keys in code | Pattern + signature detection |
 | Semgrep/CodeQL | Vulnerable code patterns | SAST scanning |
 | Trivy | Vulnerable dependencies | SCA + container scanning |
-| Checkov/KICS | Misconfigured infrastructure | IaC scanning |
+
 | Syft | Don't know what's deployed | SBOM generation |
 | Cosign | Tampered images | Cryptographic signing |
-| OPA Gatekeeper | Non-compliant deployments | Policy enforcement |
-| Falco | Runtime attacks | Behavior detection |
+
 | ArgoCD | Manual deployments, drift | GitOps automation |
 | Kustomize | Environment differences | Overlay-based config |
 | Prometheus | Blind to system health | Metrics collection |

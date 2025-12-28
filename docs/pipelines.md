@@ -32,9 +32,9 @@ on:
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌───────┐ │
-│  │  Test   │  │ Secrets │  │  SAST   │  │   SCA   │  │  IaC  │ │
-│  │  Lint   │  │  Scan   │  │  Scan   │  │  Scan   │  │ Scan  │ │
-│  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘  └───┬───┘ │
+│  │  Test   │  │ Secrets │  │  SAST   │  │   SCA   │            │
+│  │  Lint   │  │  Scan   │  │  Scan   │  │  Scan   │            │
+│  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘            │
 │       │            │            │            │           │      │
 │       └────────────┴────────────┴────────────┴───────────┘      │
 │                                 │                                │
@@ -60,6 +60,8 @@ on:
 - Uploads coverage report
 - Runs ESLint
 
+![CI Pipeline Summary](../screenshots/ci-pipeline-summary.png)
+
 #### 2. Secrets Scan (Gitleaks)
 - Scans entire git history
 - Uses custom configuration
@@ -81,10 +83,7 @@ on:
 - Signs with Cosign (keyless)
 - Generates and attaches SBOM
 
-#### 6. IaC Scan (Checkov)
-- Scans Terraform, Kubernetes, Helm
-- Uploads SARIF results
-- Soft fail for review
+
 
 ### Artifacts
 
@@ -179,8 +178,10 @@ on:
 | TruffleHog | Secret detection | Verified secrets only |
 | CodeQL | SAST | GitHub's semantic analysis |
 | Grype | Container scan | Alternative to Trivy |
-| KICS | IaC scan | Checkmarx IaC scanner |
+
 | License check | npm license-checker | License compliance |
+
+![Security Scan Summary](../screenshots/ci-security-scan-summary.png)
 
 ### SARIF Integration
 
@@ -212,7 +213,7 @@ on:
 ### Stages
 
 1. **Validate** - Format and validate
-2. **Security Scan** - Checkov + tfsec
+
 3. **Plan** - Generate execution plan
 4. **Apply** - Apply changes (with approval)
 5. **Destroy** - Destroy resources (with approval)
@@ -269,6 +270,8 @@ on:
 │ PostgreSQL      │ 14.0    │ 2026-11-12 │ ⚠️  Approaching EOL  │
 └────────────────────────────────────────────────────────────────┘
 ```
+
+![EOL Check Summary](../screenshots/ci-eol-check-summary.png)
 
 ## Pipeline Best Practices
 
