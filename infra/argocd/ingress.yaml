@@ -1,23 +1,24 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: platform-ingress
-  namespace: dev
+  name: argocd-ingress
+  namespace: argocd
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/group.name: devsecops-platform
-    alb.ingress.kubernetes.io/group.order: "1"
-    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/group.order: "10"
+    alb.ingress.kubernetes.io/backend-protocol: HTTPS
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz
 spec:
   rules:
     - http:
         paths:
-          - path: /
+          - path: /argocd
             pathType: Prefix
             backend:
               service:
-                name: user-service
+                name: argocd-server
                 port:
-                  number: 80
+                  number: 443
