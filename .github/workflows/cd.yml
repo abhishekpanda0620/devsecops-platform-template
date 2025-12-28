@@ -254,13 +254,41 @@ jobs:
       - name: Make smoke test script executable
         run: chmod +x ./scripts/smoke-test.sh
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get cluster kubeconfig
+        run: |
+          aws eks update-kubeconfig --name devsecops-${{ needs.prepare.outputs.environment }} --region ${{ env.AWS_REGION }}
+
+      - name: Get Ingress URL
+        id: ingress
+        run: |
+          # Wait for ingress to have an address
+          for i in {1..30}; do
+            INGRESS_URL=$(kubectl get ingress user-service-ingress -n ${{ needs.prepare.outputs.environment }} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "")
+            if [ -n "$INGRESS_URL" ]; then
+              echo "url=http://${INGRESS_URL}" >> $GITHUB_OUTPUT
+              echo "Found Ingress URL: $INGRESS_URL"
+              break
+            fi
+            echo "Waiting for Ingress URL... attempt $i/30"
+            sleep 10
+          done
+
+          if [ -z "$INGRESS_URL" ]; then
+            echo "❌ Could not get Ingress URL"
+            exit 1
+          fi
+
       - name: Run smoke tests
         run: |
           echo "Running smoke tests against ${{ needs.prepare.outputs.environment }}..."
-
-          # Use local deployment URL for testing within GH Actions (simulated)
-          # In real implementation this would use the ingress URL
-          TARGET_URL="http://user-service.${{ needs.prepare.outputs.environment }}:3000"
+          TARGET_URL="${{ steps.ingress.outputs.url }}"
+          echo "Using URL: $TARGET_URL"
 
           # Execute the smoke test script
           if ./scripts/smoke-test.sh "$TARGET_URL"; then
