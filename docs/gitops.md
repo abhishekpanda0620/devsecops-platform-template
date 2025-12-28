@@ -28,12 +28,14 @@ AWS recently announced **EKS Capabilities** which includes fully managed GitOps:
 | **KRO** | Kube Resource Orchestrator - reusable resource bundles |
 
 **Benefits:**
+
 - ✅ AWS handles upgrades and security patches
 - ✅ Integrated with EKS console
 - ✅ Native AWS IAM authentication via IRSA
 - ✅ Reduced operational overhead
 
 **When to use:**
+
 - Running exclusively on AWS EKS
 - Want minimal GitOps management overhead
 - Need tight AWS service integration
@@ -45,12 +47,14 @@ AWS recently announced **EKS Capabilities** which includes fully managed GitOps:
 Traditional self-managed ArgoCD installation:
 
 **Benefits:**
+
 - ✅ Full customization (plugins, SSO, RBAC)
 - ✅ Works on any Kubernetes cluster (EKS, GKE, AKS, on-prem)
 - ✅ Complete control over upgrades
 - ✅ Mature and widely documented
 
 **When to use:**
+
 - Multi-cloud or hybrid deployments
 - Need custom ArgoCD plugins
 - Want full control over configuration
@@ -192,7 +196,6 @@ kubectl get svc -n argocd argocd-server -o jsonpath='{.status.loadBalancer.ingre
 aws eks get-token --cluster-name your-cluster | argocd login ...
 ```
 
-
 ## App of Apps Pattern
 
 The platform uses the "App of Apps" pattern where a root application manages all other applications.
@@ -259,6 +262,7 @@ infra/
 ### Kustomize Overlays
 
 **Base** (`infra/k8s/base/kustomization.yaml`):
+
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -269,6 +273,7 @@ resources:
 ```
 
 **Dev Overlay** (`infra/k8s/overlays/dev/kustomization.yaml`):
+
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -284,6 +289,7 @@ replicas:
 ```
 
 **Prod Overlay** (`infra/k8s/overlays/prod/kustomization.yaml`):
+
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -340,6 +346,8 @@ CD pipeline updates dev overlay:
 cd infra/k8s/overlays/dev
 kustomize edit set image user-service=ghcr.io/user/app:sha-abc123
 ```
+
+![CD Pipeline Graph](../screenshots/cd-pipeline-graph.png)
 
 ### 4. ArgoCD Sync (Dev)
 
@@ -440,17 +448,21 @@ annotations:
   notifications.argoproj.io/subscribe.on-sync-failed.slack: deployments-alerts
 ```
 
+![Slack Notifications](../screenshots/slack-deployment-alerts.png)
+
 ## Best Practices
 
 ### 1. Separate Repositories
 
 Consider separating:
+
 - Application code repository
 - GitOps manifests repository
 
 ### 2. Use Helm or Kustomize
 
 Avoid raw manifests. Use:
+
 - Kustomize for overlays
 - Helm for reusable charts
 
@@ -469,6 +481,7 @@ Avoid raw manifests. Use:
 ### 5. Secrets Management
 
 Don't store secrets in Git. Use:
+
 - Sealed Secrets
 - External Secrets Operator
 - SOPS
@@ -482,6 +495,8 @@ argocd app list
 # Check specific app
 argocd app get user-service-prod
 ```
+
+![ArgoCD Applications List](../screenshots/argocd-applications-list.png)
 
 ## Troubleshooting
 
@@ -521,13 +536,35 @@ argocd app sync <app-name>
 ## References
 
 ### Self-Managed ArgoCD
+
 - [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
 - [GitOps Principles](https://opengitops.dev/)
 - [Kustomize](https://kustomize.io/)
 
 ### AWS EKS Managed GitOps
+
 - [AWS EKS Capabilities](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
 - [AWS Controllers for Kubernetes (ACK)](https://aws-controllers-k8s.github.io/community/)
 - [Kube Resource Orchestrator (KRO)](https://github.com/awslabs/kro)
 - [EKS IRSA (IAM Roles for Service Accounts)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
 
+## Infrastructure Teardown
+
+### Removing ArgoCD
+
+When destroying the infrastructure via Terraform (`terraform destroy`), you might see a warning that some resources were kept:
+
+```text
+Warning: Helm uninstall returned an information message
+These resources were kept due to the resource policy:
+[CustomResourceDefinition] applications.argoproj.io
+...
+```
+
+This is a **safety feature** of the ArgoCD Helm chart. The CRDs are annotated with `"helm.sh/resource-policy": "keep"` to prevent accidental deletion of all GitOps applications and their history.
+
+If you are performing a complete teardown and want to remove these CRDs, you must delete them manually:
+
+```bash
+kubectl delete crd applications.argoproj.io applicationsets.argoproj.io appprojects.argoproj.io
+```
