@@ -50,10 +50,26 @@ spec:
         # Alertmanager Configuration
         alertmanager:
           enabled: true
+          config:
+            global:
+              resolve_timeout: 5m
+              slack_api_url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+            route:
+              group_by: ['job']
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 12h
+              receiver: 'slack-notifications'
+              routes:
+              - match:
+                  alertname: Watchdog
+                receiver: 'slack-notifications'
+            receivers:
+            - name: 'slack-notifications'
+              slack_configs:
+              - channel: '#alerts'
+                send_resolved: true
           alertmanagerSpec:
-            alertmanagerConfigSelector:
-              matchLabels:
-                alertmanagerConfig: "true"
             resources:
               requests:
                 cpu: 50m
