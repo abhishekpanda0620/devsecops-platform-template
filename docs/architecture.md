@@ -31,8 +31,8 @@ This document describes the architecture of the DevSecOps Platform Template.
 │   │   Application   │  │    Monitoring   │  │ Runtime Security │                     │
 │   │   Namespace     │  │    Namespace    │  │    Namespace     │                     │
 │   ├─────────────────┤  ├─────────────────┤  ├─────────────────┤                      │
-│   │ • user-service  │  │ • Prometheus    │  │ • Falco          │                     │
-│   │ • HPA           │  │ • Grafana       │  │ • OPA Gatekeeper │                     │
+│   │ • user-service  │  │ • Prometheus    │  │ • NetworkPolicy  │                     │
+│   │ • HPA           │  │ • Grafana       │  │ • ServiceMonitor │                     │
 │   │ • NetworkPolicy │  │ • Loki          │  │ • Network Policy │                     │
 │   │ • PDB           │  │ • Alertmanager  │  │                  │                     │
 │   └─────────────────┘  └─────────────────┘  └─────────────────┘                      │
@@ -123,9 +123,8 @@ The platform implements defense-in-depth with multiple security layers:
 │  ├── EOL technology detection (eol-check)                        │
 │  └── Policy as Code (OPA Gatekeeper)                             │
 │                                                                  │
-│  Layer 4: Runtime Security                                       │
-│  ├── Admission control (OPA Gatekeeper)                          │
-│  ├── Runtime detection (Falco)                                   │
+
+
 │  └── Network policies                                            │
 │                                                                  │
 │  Layer 5: Observability                                          │
@@ -160,12 +159,7 @@ Namespaces:
     - Loki
     - Alertmanager
 
-  falco-system:
-    - Falco DaemonSet
-    - Falcosidekick
 
-  gatekeeper-system:
-    - OPA Gatekeeper
     - Constraint Templates
 ```
 
@@ -217,11 +211,9 @@ Namespaces:
 8. **Image signed** → Cosign (keyless)
 9. **Manifest updated** → Kustomize patches image tag
 10. **ArgoCD syncs** → Detects change, deploys
-11. **Gatekeeper validates** → Admission control
-12. **Pods deployed** → With security context
-13. **Falco monitors** → Runtime threats
-14. **Prometheus scrapes** → Metrics collection
-15. **Grafana visualizes** → Dashboards
+11. **Pods deployed** → With security context
+12. **Prometheus scrapes** → Metrics collection
+13. **Grafana visualizes** → Dashboards
 
 ## Environment Promotion
 

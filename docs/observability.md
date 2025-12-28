@@ -10,13 +10,11 @@ The observability stack provides comprehensive monitoring, logging, and tracing 
 |-----------|---------|------------|
 | **Metrics** | Application & infrastructure metrics | Prometheus + Grafana |
 | **Logging** | Centralized log aggregation | Loki + Promtail |
-| **Tracing** | Distributed request tracing | Tempo (optional) |
 | **Alerting** | Proactive incident detection | Alertmanager |
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
 │                         Observability Stack                              │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │

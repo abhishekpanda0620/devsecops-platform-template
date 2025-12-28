@@ -120,6 +120,8 @@ backend "s3" {
 }
 ```
 
+![S3 Terraform State](../screenshots/aws-s3-terraform-state.png)
+
 4. **Deploy Infrastructure**
 
 ```bash
@@ -140,6 +142,8 @@ aws eks update-kubeconfig --name devsecops-dev --region us-east-1
 # Verify connection
 kubectl get nodes
 ```
+
+![EKS Cluster Overview](../screenshots/aws-eks-cluster-overview.png)
 
 ## GitOps Setup
 
@@ -208,36 +212,9 @@ Add the following secrets to your GitHub repository:
 2. Create environments: `dev`, `staging`, `prod`
 3. For `prod`, add required reviewers
 
-## Runtime Security Setup
-
-### 1. Deploy Gatekeeper
-
-```bash
-# Install OPA Gatekeeper
-kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
-
-# Apply constraint templates
-kubectl apply -f runtime/opa-gatekeeper/templates/
-
-# Apply constraints
-kubectl apply -f runtime/opa-gatekeeper/constraints/
-```
-
-### 2. Deploy Falco
-
-Falco is deployed via ArgoCD, but you can also install manually:
-
-```bash
-helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm repo update
-
-helm install falco falcosecurity/falco \
-  --namespace falco-system \
-  --create-namespace \
-  --set driver.kind=ebpf
-```
-
 ## Monitoring Setup
+
+
 
 The monitoring stack (Prometheus, Grafana, Loki) is deployed via ArgoCD. Access Grafana:
 
@@ -263,6 +240,9 @@ kubectl get pods -A
 # Check ArgoCD applications
 argocd app list
 ```
+
+![EKS Workloads](../screenshots/aws-eks-workloads-pods.png)
+![App JSON Response](../screenshots/app-running-json.png)
 
 ### Run End-to-End Test
 
@@ -293,9 +273,7 @@ make scan-eol
    - Check repository access
    - Verify manifest syntax: `kubectl apply --dry-run=client -k infra/k8s/overlays/dev`
 
-4. **Gatekeeper blocks deployments**
-   - Check constraint violations: `kubectl get constraints`
-   - Review constraint parameters
+
 
 ### Getting Help
 
@@ -309,4 +287,3 @@ make scan-eol
 2. Add your own Semgrep rules
 3. Configure alerting in Alertmanager
 4. Set up Slack notifications for ArgoCD
-5. Implement additional Gatekeeper policies

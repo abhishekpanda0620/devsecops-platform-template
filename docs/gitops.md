@@ -230,7 +230,6 @@ infra/argocd/apps/
 ├── user-service-dev.yaml     # Dev environment
 ├── user-service-prod.yaml    # Production environment
 ├── monitoring.yaml           # Prometheus/Grafana stack
-└── falco.yaml               # Runtime security
 ```
 
 ## Repository Structure

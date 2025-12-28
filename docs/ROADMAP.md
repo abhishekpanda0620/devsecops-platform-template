@@ -23,7 +23,6 @@ This document is a production-grade roadmap for building the **DevSecOps Platfor
 * CI/CD workflows (GitHub Actions)
 * Security stages (SAST, SCA, IaC Scan, Container Scan, Secrets scan)
 * GitOps (ArgoCD) + "App of Apps"
-* Runtime Security (Falco)
 * Observability (Prometheus, Grafana, Loki)
 * Terraform infra modules
 * Image signing + SBOM generation + attestations
@@ -57,9 +56,7 @@ devsecops-platform-template/
 │   ├── helm/                     # Helm charts
 │   └── argocd/                   # GitOps manifests (App of Apps)
 │
-├── runtime/
-│   ├── falco/
-│   ├── opa-gatekeeper/
+
 │   └── monitoring/               # Prometheus/Grafana/Loki
 │
 ├── sbom/
@@ -120,11 +117,10 @@ Integrate security scans as pre-merge gates:
 * Automate manifest updates via a small action that patches image tags
 * Promotion flow: `dev` → `staging` → `prod` via PRs and approvals
 
-### Phase 6 — Runtime Security
+### Phase 6 — Runtime Security (Future)
 
-* Falco deployed as DaemonSet with tuned rules
-* OPA Gatekeeper policy templates (deny privileged, hostPath, enforce image signatures)
-* Optional: Kyverno rules and remediation
+* Runtime Security (Falco/Tetragon)
+* Policy as Code (Kyverno/OPA)
 
 ### Phase 7 — Observability
 
@@ -189,7 +185,7 @@ Integrate security scans as pre-merge gates:
 * **Image Policy:** Only deploy signed images. Gatekeeper constraint to verify signature attestations or rely on registry policy.
 * **Network Policy:** Default deny ingress between namespaces. Provide NetworkPolicy examples.
 * **RBAC:** Minimal privileges for service accounts; example audit role.
-* **Resource Requests & Limits:** Enforce via Gatekeeper policy that CPU/memory requests exist.
+* **Resource Requests & Limits:** Enforce via policy that CPU/memory requests exist.
 * **Supply Chain:** SBOM generation and storage; attestations via Cosign; include instructions for SLSA levels.
 
 ---
@@ -228,7 +224,7 @@ Agent should generate the following artifacts for v0.1:
 * GitHub Actions: `ci.yml` with Gitleaks, Semgrep, Trivy, Syft, Cosign steps
 * Terraform module for EKS (minimal) and backend config
 * ArgoCD manifests for sample app + monitoring
-* Falco & Gatekeeper baseline manifests
+
 * Basic Grafana dashboard JSON
 * Docs: `architecture.md`, `setup-guide.md`, `pipelines.md`, `security.md`
 
@@ -271,7 +267,7 @@ Agent should generate the following artifacts for v0.1:
 3. Create `ci.yml` with security gates
 4. Create minimal Terraform EKS module and pipeline
 5. Generate ArgoCD manifests and overlay structure
-6. Add runtime security (Falco) and Gatekeeper constraints
+6. Add runtime security and constraints (Future)
 7. Add monitoring stack manifests and dashboards
 8. Write docs and onboarding guides
 
