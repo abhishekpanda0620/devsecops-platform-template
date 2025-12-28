@@ -70,6 +70,7 @@ spec:
               - channel: '#alerts'
                 send_resolved: true
           alertmanagerSpec:
+            externalUrl: "http://YOUR_ALB_URL/alertmanager"
             resources:
               requests:
                 cpu: 50m
