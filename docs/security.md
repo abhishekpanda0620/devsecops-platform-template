@@ -95,20 +95,7 @@ npx eol-check --format table
 - Operating systems
 - AI model deprecations
 
-### 5. Infrastructure as Code Scanning (Checkov)
 
-**Purpose:** Scan Terraform, Kubernetes, and Helm configurations for security misconfigurations.
-
-**Configuration:** `security/checkov/.checkov.yaml`
-
-**Usage:**
-```bash
-# Run locally
-make scan-iac
-
-# Or directly
-docker run --rm -v $(PWD):/tf bridgecrew/checkov -d /tf/infra
-```
 
 ### 6. Container Image Signing (Cosign)
 
@@ -186,26 +173,9 @@ resources:
     memory: 512Mi
 ```
 
-### OPA Gatekeeper Policies
-
-| Policy | Description |
-|--------|-------------|
-| `deny-privileged` | Blocks privileged containers |
-| `require-nonroot` | Requires runAsNonRoot: true |
-| `require-resource-limits` | Enforces CPU/memory limits |
-| `require-trusted-registries` | Only allows images from approved registries |
-
-## Runtime Security
 
 
-**Example custom rule:**
-```yaml
-- rule: Terminal shell in container
-  desc: A shell was spawned in a container
-  condition: spawned_process and container and shell_procs
-  output: Shell spawned in container (user=%user.name container=%container.name)
-  priority: WARNING
-```
+
 
 ## Secrets Management
 
@@ -295,7 +265,7 @@ The CI pipeline enforces these gates:
 | SAST | HIGH/CRITICAL findings |
 | Dependency scan | CRITICAL vulnerabilities |
 | Container scan | CRITICAL vulnerabilities |
-| IaC scan | HIGH/CRITICAL misconfigurations |
+
 | EOL check | EOL technologies in use |
 
 ## Compliance
@@ -319,7 +289,7 @@ This template helps achieve SLSA Level 2+:
 - [ ] All secrets rotated regularly
 - [ ] Dependencies updated and scanned
 - [ ] Container images rebuilt weekly
-- [ ] Gatekeeper policies reviewed
+
 - [ ] Access logs reviewed
 - [ ] Network policies tested
 - [ ] Backup recovery tested

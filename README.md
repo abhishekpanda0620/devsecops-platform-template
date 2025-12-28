@@ -48,7 +48,7 @@ devsecops-platform-template/
 │   ├── semgrep/                 # SAST rules
 │   ├── gitleaks/                # Secret detection config
 │   ├── trivy/                   # Container scanning
-│   └── checkov/                 # IaC scanning
+
 │
 ├── infra/                       # Infrastructure as Code
 │   ├── terraform/               # Cloud infrastructure
@@ -68,10 +68,7 @@ devsecops-platform-template/
 │   └── argocd/                  # GitOps manifests
 │       └── apps/observability/  # Observability stack ArgoCD apps
 │
-├── runtime/                     # Runtime security
-│   ├── opa-gatekeeper/          # Kubernetes policy enforcement
-│   └── falco/                   # Runtime threat detection
-│
+
 ├── docs/                        # Documentation
 │   ├── PROJECT_OVERVIEW.md      # Complete project explanation
 │   ├── observability.md         # Monitoring/logging guide
@@ -135,9 +132,7 @@ make deploy-argocd
 | **Trivy** | Vulnerability scanning (SCA, Container) | CI |
 | **Syft** | SBOM generation | Build |
 | **Cosign** | Image signing & verification | Build, Deploy |
-| **Checkov** | Infrastructure as Code scanning | CI |
-| **Falco** | Runtime threat detection | Runtime |
-| **OPA Gatekeeper** | Kubernetes policy enforcement | Runtime |
+
 
 ---
 
@@ -149,7 +144,7 @@ make deploy-argocd
 | **Grafana** | Visualization dashboards | Port 3000 |
 | **Loki** | Log aggregation | Integrated in Grafana |
 | **Alertmanager** | Alert routing and notifications | Port 9093 |
-| **Tempo** | Distributed tracing (optional) | Port 3100 |
+
 
 ```bash
 # Install via ArgoCD (GitOps - recommended)
@@ -199,9 +194,11 @@ This project implements **Continuous Delivery** (not Continuous Deployment):
 - [GitOps Setup](docs/gitops.md)
 - [Setup Guide](docs/setup-guide.md)
 - [Observability Stack](docs/observability.md)
+- [Alert Simulation Guide](docs/simulation/Alert_Simulation_Guide.md)
 - [Pre-commit Hooks](docs/pre-commit.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Project Overview](docs/PROJECT_OVERVIEW.md)
+- [Root Cause Analysis](docs/RCA/)
 
 ---
 
@@ -217,7 +214,7 @@ make pre-commit-install
 make pre-commit-run
 ```
 
-Includes: Gitleaks, Semgrep, ESLint, Terraform fmt/validate, Checkov, Hadolint, and more.
+Includes: Gitleaks, Semgrep, ESLint, Terraform fmt/validate, Hadolint, and more.
 
 ---
 
