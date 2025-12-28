@@ -37,6 +37,16 @@ if [ -n "$SLACK_WEBHOOK_URL" ]; then
       --dry-run=client -o yaml | kubectl apply -f -
       
     echo "   ✅ Created 'argocd-notifications-secret' in 'argocd' namespace"
+
+    # Create secret for Alertmanager (observability)
+    kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
+    
+    kubectl create secret generic alertmanager-slack-creds \
+      -n observability \
+      --from-literal=api_url="$SLACK_WEBHOOK_URL" \
+      --dry-run=client -o yaml | kubectl apply -f -
+      
+    echo "   ✅ Created 'alertmanager-slack-creds' in 'observability' namespace"
 else
     echo "   ⚠️ Skipped Slack Webhook"
 fi

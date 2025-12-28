@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: slack-config
+  namespace: observability
+  labels:
+    alertmanagerConfig: "true"
+spec:
+  route:
+    groupBy: ['job']
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 12h
+    receiver: 'slack-notifications'
+    routes:
+    - match:
+        alertname: Watchdog
+      receiver: 'slack-notifications'
+  receivers:
+  - name: 'slack-notifications'
+    slackConfigs:
+    - channel: '#alerts'
+      sendResolved: true
+      apiURL:
+        name: alertmanager-slack-creds
+        key: api_url
