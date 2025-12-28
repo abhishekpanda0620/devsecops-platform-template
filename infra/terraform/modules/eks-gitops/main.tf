@@ -225,49 +225,76 @@ resource "helm_release" "argocd" {
 }
 
 # Deploy root ArgoCD Application (for Helm-based ArgoCD)
-resource "kubernetes_manifest" "argocd_root_app" {
+# Using null_resource with kubectl instead of kubernetes_manifest to avoid
+# CRD validation errors during `terraform plan` (the CRDs don't exist until
+# the ArgoCD Helm chart is applied)
+resource "null_resource" "argocd_root_app" {
   count = var.enable_helm_argocd && var.deploy_root_application ? 1 : 0
 
-  manifest = {
-    apiVersion = "argoproj.io/v1alpha1"
-    kind       = "Application"
-    metadata = {
-      name      = "devsecops-platform"
-      namespace = "argocd"
-      finalizers = [
-        "resources-finalizer.argocd.argoproj.io"
-      ]
-    }
-    spec = {
-      project = "default"
-      source = {
-        repoURL        = var.gitops_repo_url
-        targetRevision = var.gitops_target_revision
-        path           = var.gitops_apps_path
-      }
-      destination = {
-        server    = "https://kubernetes.default.svc"
-        namespace = "argocd"
-      }
-      syncPolicy = {
-        automated = {
-          prune    = true
-          selfHeal = true
-        }
-        syncOptions = [
-          "CreateNamespace=true",
-          "PrunePropagationPolicy=foreground"
-        ]
-        retry = {
-          limit = 5
-          backoff = {
-            duration    = "5s"
-            factor      = 2
-            maxDuration = "3m"
-          }
-        }
-      }
-    }
+  triggers = {
+    gitops_repo_url        = var.gitops_repo_url
+    gitops_target_revision = var.gitops_target_revision
+    gitops_apps_path       = var.gitops_apps_path
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Configure kubectl to use the EKS cluster
+      echo "Configuring kubectl for EKS cluster ${var.cluster_name}..."
+      aws eks update-kubeconfig --name ${var.cluster_name} --region ${data.aws_region.current.id}
+
+      # Wait for ArgoCD CRDs to be available (max 5 minutes)
+      echo "Waiting for ArgoCD CRDs to be installed..."
+      for i in $(seq 1 30); do
+        if kubectl get crd applications.argoproj.io &>/dev/null; then
+          echo "ArgoCD CRDs are available!"
+          break
+        fi
+        if [ $i -eq 30 ]; then
+          echo "ERROR: Timed out waiting for ArgoCD CRDs"
+          exit 1
+        fi
+        echo "Waiting for ArgoCD CRDs... attempt $i/30"
+        sleep 10
+      done
+
+      # Wait for ArgoCD server to be ready
+      echo "Waiting for ArgoCD server to be ready..."
+      kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd || true
+
+      # Apply the root Application
+      cat <<EOF | kubectl apply -f -
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: devsecops-platform
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: ${var.gitops_repo_url}
+    targetRevision: ${var.gitops_target_revision}
+    path: ${var.gitops_apps_path}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+EOF
+    EOT
   }
 
   depends_on = [helm_release.argocd]
@@ -490,7 +517,11 @@ resource "aws_iam_role_policy" "aws_load_balancer_controller" {
         Resource = [
           "arn:aws:elasticloadbalancing:*:*:targetgroup/*/*",
           "arn:aws:elasticloadbalancing:*:*:loadbalancer/net/*/*",
-          "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/*/*"
+          "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/*/*",
+          "arn:aws:elasticloadbalancing:*:*:listener/net/*/*/*",
+          "arn:aws:elasticloadbalancing:*:*:listener/app/*/*/*",
+          "arn:aws:elasticloadbalancing:*:*:listener-rule/net/*/*/*",
+          "arn:aws:elasticloadbalancing:*:*:listener-rule/app/*/*/*"
         ]
       },
       {

@@ -48,6 +48,10 @@ spec:
           enabled: true
           webui:
             enabled: true
+            redis:
+              storageEnabled: true
+              storageClass: gp3
+              storageSize: 1Gi
           config:
             slack:
               webhookurl: ""  # Configure via secret

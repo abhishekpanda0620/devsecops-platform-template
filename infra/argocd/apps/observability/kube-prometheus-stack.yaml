@@ -38,6 +38,7 @@ spec:
             storageSpec:
               volumeClaimTemplate:
                 spec:
+                  storageClassName: gp3
                   accessModes: ["ReadWriteOnce"]
                   resources:
                     requests:
@@ -71,6 +72,7 @@ spec:
               memory: 512Mi
           persistence:
             enabled: true
+            storageClassName: gp3
             size: 5Gi
           # Pre-configured dashboards
           dashboardProviders:
