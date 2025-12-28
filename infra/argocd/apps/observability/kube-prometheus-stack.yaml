@@ -67,8 +67,7 @@ spec:
             receivers:
             - name: 'slack-notifications'
               slack_configs:
-              - channel: '#alerts'
-                send_resolved: true
+              - send_resolved: true
           alertmanagerSpec:
             routePrefix: /alertmanager
             externalUrl: "http://YOUR_ALB_URL/alertmanager"
