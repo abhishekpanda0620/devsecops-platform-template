@@ -1,10 +1,10 @@
-# Patch to make service publicly accessible in dev
+# Patch for dev environment - use ClusterIP with Ingress
 apiVersion: v1
 kind: Service
 metadata:
   name: user-service
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 80
       targetPort: http
