@@ -19,3 +19,10 @@ spec:
                 name: prometheus-grafana
                 port:
                   number: 80
+          - path: /alertmanager
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-kube-prometheus-alertmanager
+                port:
+                  number: 9093
