@@ -7,24 +7,15 @@ metadata:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/group.name: devsecops-platform
-    alb.ingress.kubernetes.io/group.order: "20"
     alb.ingress.kubernetes.io/healthcheck-path: /api/health
 spec:
   rules:
     - http:
         paths:
-          - path: /grafana
+          - path: /
             pathType: Prefix
             backend:
               service:
                 name: prometheus-grafana
                 port:
                   number: 80
-          - path: /alertmanager
-            pathType: Prefix
-            backend:
-              service:
-                name: prometheus-kube-prometheus-alertmanager
-                port:
-                  number: 9093
