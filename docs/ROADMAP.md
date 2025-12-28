@@ -57,8 +57,6 @@ devsecops-platform-template/
 │   └── argocd/                   # GitOps manifests (App of Apps)
 │
 
-│   └── monitoring/               # Prometheus/Grafana/Loki
-│
 ├── sbom/
 │
 ├── docs/
