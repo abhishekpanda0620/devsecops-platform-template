@@ -1,39 +1,38 @@
 ---
-name: Bug Report
+name: Bug report
 about: Create a report to help us improve
-title: '[BUG] '
-labels: bug
+title: ''
+labels: ''
 assignees: ''
+
 ---
 
-## Bug Description
+**Describe the bug**
 A clear and concise description of what the bug is.
 
-## Steps to Reproduce
+**To Reproduce**
+Steps to reproduce the behavior:
 1. Go to '...'
-2. Run command '...'
-3. See error
+2. Click on '....'
+3. Scroll down to '....'
+4. See error
 
-## Expected Behavior
-A clear description of what you expected to happen.
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
-## Actual Behavior
-What actually happened.
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-## Environment
-- OS: [e.g., Ubuntu 22.04]
-- Node.js version: [e.g., 20.0.0]
-- Docker version: [e.g., 24.0.0]
-- Kubernetes version: [e.g., 1.28]
+**Desktop (please complete the following information):**
+ - OS: [e.g. iOS]
+ - Browser [e.g. chrome, safari]
+ - Version [e.g. 22]
 
-## Logs
-```
-Paste relevant logs here
-```
+**Smartphone (please complete the following information):**
+ - Device: [e.g. iPhone6]
+ - OS: [e.g. iOS8.1]
+ - Browser [e.g. stock browser, safari]
+ - Version [e.g. 22]
 
-## Additional Context
+**Additional context**
 Add any other context about the problem here.
-
-## Security Considerations
-- [ ] This bug has security implications
-- [ ] I have checked for sensitive data in logs before posting
