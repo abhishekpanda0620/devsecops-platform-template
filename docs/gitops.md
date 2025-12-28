@@ -567,3 +567,24 @@ If you are performing a complete teardown and want to remove these CRDs, you mus
 ```bash
 kubectl delete crd applications.argoproj.io applicationsets.argoproj.io appprojects.argoproj.io
 ```
+
+### Removing Cloud Resources (ALBs)
+
+If you use `terraform destroy` without deleting Kubernetes resources first, cloud resources created by controllers (like ALBs from Ingress) may be orphaned.
+
+**Always delete application resources/ingress before destroying the cluster:**
+
+```bash
+kubectl delete -k infra/k8s/overlays/dev
+```
+
+### Emptying ECR Repositories
+
+Terraform may fail to destroy ECR repositories if they contain images (unless `force_delete` is enabled). Best practice is to empty them first:
+
+```bash
+# Delete all images in a repository
+aws ecr batch-delete-image \
+    --repository-name devsecops/user-service \
+    --image-ids "$(aws ecr list-images --repository-name devsecops/user-service --query 'imageIds[*]' --output json)" || true
+```

@@ -115,26 +115,21 @@ Integrate security scans as pre-merge gates:
 * Automate manifest updates via a small action that patches image tags
 * Promotion flow: `dev` → `staging` → `prod` via PRs and approvals
 
-### Phase 6 — Runtime Security (Future)
-
-* Runtime Security (Falco/Tetragon)
-* Policy as Code (Kyverno/OPA)
-
-### Phase 7 — Observability
+### Phase 6 — Observability
 
 * Prometheus Operator (or kube-prometheus-stack)
 * Grafana with prebuilt dashboards (pods, HPA, API latency)
 * Loki for logs and Promtail for collection
 * Alertmanager alerts for critical conditions
 
-### Phase 8 — Documentation & Onboarding
+### Phase 7 — Documentation & Onboarding
 
 * Architecture diagrams (Mermaid/PNG)
 * Runbooks for common incidents
 * Contributing guide, CODEOWNERS, PR templates
 * Getting-started scripts for local and cloud
 
-### Phase 9 — Release & Community
+### Phase 8 — Release & Community
 
 * GitHub releases and changelog
 * Publish to Terraform Registry (modules) when stable

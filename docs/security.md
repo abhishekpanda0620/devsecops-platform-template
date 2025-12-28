@@ -197,15 +197,6 @@ resources:
 
 ## Runtime Security
 
-### Falco Rules
-
-Falco monitors for runtime threats:
-
-- Terminal shell in container
-- Sensitive file access
-- Outbound network connections
-- Privilege escalation attempts
-- Cryptocurrency mining
 
 **Example custom rule:**
 ```yaml
@@ -329,7 +320,6 @@ This template helps achieve SLSA Level 2+:
 - [ ] Dependencies updated and scanned
 - [ ] Container images rebuilt weekly
 - [ ] Gatekeeper policies reviewed
-- [ ] Falco alerts monitored
 - [ ] Access logs reviewed
 - [ ] Network policies tested
 - [ ] Backup recovery tested
@@ -341,8 +331,7 @@ This template helps achieve SLSA Level 2+:
 1. **Gitleaks alert** - Secret in repository
 2. **Semgrep alert** - Code vulnerability
 3. **Trivy alert** - CVE in dependency/image
-4. **Falco alert** - Runtime threat
-5. **EOL check alert** - Unsupported technology
+4. **EOL check alert** - Unsupported technology
 
 ### Response
 

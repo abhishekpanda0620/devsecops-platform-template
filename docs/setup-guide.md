@@ -274,6 +274,19 @@ make scan-eol
    - Verify manifest syntax: `kubectl apply --dry-run=client -k infra/k8s/overlays/dev`
 
 
+4. **Orphaned Load Balancers after Destroy**
+   - **Symptom:** `terraform destroy` finishes but ALBs remain in AWS Console.
+   - **Cause:** ALBs are created by the K8s Ingress Controller, not Terraform. Terraform deletes the cluster before the controller can clean up.
+   - **Fix:** Manually delete the ALB in AWS Console, or delete K8s resources first: `kubectl delete -k infra/k8s/overlays/prod`
+
+
+
+5. **Terraform Destroy fails on ECR**
+   - **Symptom:** Error deleting ECR repository because it is not empty.
+   - **Fix:** Manually empty the repository using AWS Console or CLI:
+     ```bash
+     aws ecr list-images --repository-name <repo-name> --query 'imageIds[*]' --output json | xargs -I {} aws ecr batch-delete-image --repository-name <repo-name> --image-ids {}
+     ```
 
 ### Getting Help
 
