@@ -2,7 +2,6 @@
 
 [![CI Pipeline](https://github.com/abhishekpanda0620/devsecops-platform-template/actions/workflows/ci.yml/badge.svg)](https://github.com/abhishekpanda0620/devsecops-platform-template/actions/workflows/ci.yml)
 [![CD Pipeline](https://github.com/abhishekpanda0620/devsecops-platform-template/actions/workflows/cd.yml/badge.svg)](https://github.com/abhishekpanda0620/devsecops-platform-template/actions/workflows/cd.yml)
-[![Infrastructure](https://github.com/abhishekpanda0620/devsecops-platform-template/actions/workflows/terraform.yml/badge.svg)](https://github.com/abhishekpanda0620/devsecops-platform-template/actions/workflows/terraform.yml)
 [![EOL Check](https://github.com/abhishekpanda0620/devsecops-platform-template/actions/workflows/eol-check.yml/badge.svg)](https://github.com/abhishekpanda0620/devsecops-platform-template/actions/workflows/eol-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
